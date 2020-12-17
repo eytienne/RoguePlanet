@@ -1,16 +1,20 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Planet : MonoBehaviour
 {
-    [SerializeField, Range(1, 50)]
+    [SerializeField, Range(1, 100)]
     int nbSegments = 10;
+    [SerializeField]
+    Noise noise;
 
     MeshFilter meshFilter;
+    MeshCollider meshCollider;
 
     void Start() {
         meshFilter = gameObject.AddComponent<MeshFilter>();
+        meshCollider = gameObject.AddComponent<MeshCollider>();
+        noise = new Noise(new NoiseOctave(0.15f, 3, 0), 4, 0.85f, 5, 1);
+        noise.maskAgainstFirstOctave = true;
         SetupMesh();
     }
 
@@ -21,12 +25,11 @@ public class Planet : MonoBehaviour
     }
 
     void SetupMesh() {
-        meshFilter.sharedMesh = GenerateSphere(nbSegments, PerlinNoise);
+        meshFilter.sharedMesh = GenerateSphere(nbSegments);
+        meshCollider.sharedMesh = GenerateSphere(nbSegments / 3);
     }
 
-    delegate float Noise(float x, float y, float z);
-
-    Mesh GenerateSphere(int nbSegments = 1, Noise noise = null) {
+    Mesh GenerateSphere(int nbSegments = 1) {
         Mesh mesh = new Mesh();
         mesh.name = "sphere";
 
@@ -35,60 +38,52 @@ public class Planet : MonoBehaviour
 
         // transform cube face to "sphere face"
         Mesh upperMesh = GeneratePlaneXZ(2 * Vector2.one, nbSegments, nbSegments);
-        Vector3[] vertices = upperMesh.vertices;
-        Vector3[] normals = new Vector3[vertices.Length];
-        for (int i = 0; i < vertices.Length; i++) {
-            Vector3 vertex = vertices[i];
-            vertex.y += 1;
-
-            Vector3 absVertex = new Vector3(Mathf.Abs(vertex.x), Mathf.Abs(vertex.y), Mathf.Abs(vertex.z));
-            // temp way to avoid holes on the face edges due to the noise
-            float tx = 10 * Mathf.Clamp(1 - absVertex.x, 0f, 0.1f);
-            float ty = 10 * Mathf.Clamp(1 - absVertex.z, 0f, 0.1f);
-            normals[i] = vertex.normalized;
-            vertex = EvenSpherePoint(vertex);
-
-            Vector3 noiseInput = 50 * vertex;
-            float effectiveRadius = 1
-                // + tx * ty * 0.1f * noise(noiseInput.x, noiseInput.z)
-                ;
-            vertex *= effectiveRadius;
-            vertex.y -= 1;
-            vertices[i] = vertex;
-        }
-        upperMesh.vertices = vertices;
-        upperMesh.normals = normals;
 
         // reorient the faces
         Quaternion upToBack = Quaternion.FromToRotation(Vector3.up, Vector3.back);
         for (int i = 0; i < 6; i++) {
-            combines[i].mesh = upperMesh;
             Vector3 dir = directions[i];
-            Quaternion orientation = Quaternion.FromToRotation(Vector3.back, dir);
-            combines[i].transform =
-                Matrix4x4.Translate(dir)
-                * Matrix4x4.Rotate(orientation * upToBack)
-                ;
+            Mesh copy = Instantiate(upperMesh);
+            Vector3[] vertices = copy.vertices;
+            Vector3[] normals = new Vector3[vertices.Length];
+            for (int j = 0; j < vertices.Length; j++) {
+                Vector3 vertex = vertices[j];
+                vertex.y += 1;
+
+                vertex = EvenSpherePoint(vertex);
+                if (dir != Vector3.up) {
+                    Quaternion orientation = Quaternion.FromToRotation(Vector3.back, dir);
+                    vertex = Matrix4x4.Rotate(orientation * upToBack) * vertex;
+                }
+                normals[j] = vertex;
+
+                float effectiveRadius = 1 + noise.GetElevation(vertex);
+                vertex *= effectiveRadius;
+
+                vertex.y -= 1;
+                vertices[j] = vertex;
+            }
+            copy.vertices = vertices;
+            copy.normals = normals;
+            combines[i].mesh = copy;
         }
 
-        mesh.CombineMeshes(combines);
+        mesh.CombineMeshes(combines, true, false);
         mesh.Optimize();
 
         return mesh;
     }
 
-    // readonly static float
-
     Vector3 EvenSpherePoint(Vector3 squarePoint) {
         Vector3 v = squarePoint;
         float x2 = v.x * v.x;
-		float y2 = v.y * v.y;
-		float z2 = v.z * v.z;
+        float y2 = v.y * v.y;
+        float z2 = v.z * v.z;
 
-		Vector3 ret;
-		ret.x = v.x * Mathf.Sqrt(1f - y2 / 2f - z2 / 2f + y2 * z2 / 3f);
-		ret.y = v.y * Mathf.Sqrt(1f - x2 / 2f - z2 / 2f + x2 * z2 / 3f);
-		ret.z = v.z * Mathf.Sqrt(1f - x2 / 2f - y2 / 2f + x2 * y2 / 3f);
+        Vector3 ret;
+        ret.x = v.x * Mathf.Sqrt(1f - y2 / 2f - z2 / 2f + y2 * z2 / 3f);
+        ret.y = v.y * Mathf.Sqrt(1f - x2 / 2f - z2 / 2f + x2 * z2 / 3f);
+        ret.z = v.z * Mathf.Sqrt(1f - x2 / 2f - y2 / 2f + x2 * y2 / 3f);
 
         return ret;
     }
@@ -139,23 +134,5 @@ public class Planet : MonoBehaviour
         mesh.Optimize();
 
         return mesh;
-    }
-
-    float PerlinNoise(Vector3 v) {
-        return PerlinNoise(v.x, v.y, v.z);
-    }
-
-    float PerlinNoise(float x, float y, float z) {
-        float sum = 0;
-
-        sum += Mathf.PerlinNoise(x, y);
-        sum += Mathf.PerlinNoise(y, z);
-        sum += Mathf.PerlinNoise(x, z);
-
-        sum += Mathf.PerlinNoise(y, x);
-        sum += Mathf.PerlinNoise(z, y);
-        sum += Mathf.PerlinNoise(z, x);
-
-        return sum / 6;
     }
 }

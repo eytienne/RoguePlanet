@@ -5,6 +5,7 @@
       "IndentationSize": 4,
       "NewLinesForBracesInAnonymousMethods": false,
       "NewLinesForBracesInControlBlocks": false,
-      "NewLinesForBracesInMethods": false
+      "NewLinesForBracesInMethods": false,
+      "NewLineForElse": false
     }
   }
