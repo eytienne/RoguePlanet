@@ -6,7 +6,6 @@ public class Attractor : MonoBehaviour
 {
     Rigidbody body;
     const float G = 0.1f;
-
     public float nearMass {
         get {
             Vector3 scale = transform.lossyScale;
@@ -19,10 +18,12 @@ public class Attractor : MonoBehaviour
         MeshFilter meshFilter = GetComponent<MeshFilter>();
     }
 
+    float lastFrame = 0f;
     void FixedUpdate() {
         foreach (UnderGravity obj in UnderGravity.ones) {
             Vector3 down = (transform.position - obj.transform.position);
-            obj.body.AddForce(down.normalized * G * nearMass * obj.body.mass / down.magnitude, ForceMode.Acceleration);
+            Vector3 gravity = down.normalized * G * nearMass * obj.body.mass / down.magnitude;
+            obj.body.AddForce(gravity, ForceMode.Acceleration);
         }
     }
 }

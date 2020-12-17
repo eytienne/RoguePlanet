@@ -11,7 +11,6 @@ public class UnderGravity : MonoBehaviour
     void Start() {
         body = GetComponent<Rigidbody>();
         body.useGravity = false;
-        body.sleepThreshold = 1;
     }
 
     void OnEnable() {
@@ -22,6 +21,4 @@ public class UnderGravity : MonoBehaviour
         ones.Remove(this);
     }
 
-    void FixedUpdate() {
-    }
 }

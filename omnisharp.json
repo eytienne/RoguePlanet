@@ -6,6 +6,8 @@
       "NewLinesForBracesInAnonymousMethods": false,
       "NewLinesForBracesInControlBlocks": false,
       "NewLinesForBracesInMethods": false,
-      "NewLineForElse": false
+      "NewLineForElse": false,
+      "NewLinesForBracesInProperties": false,
+      "NewLinesForBracesInAccessors": false
     }
   }
