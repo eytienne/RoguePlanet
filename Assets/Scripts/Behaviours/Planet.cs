@@ -10,10 +10,10 @@ public class Planet : MonoBehaviour
     MeshFilter meshFilter;
     MeshCollider meshCollider;
 
-    void Start() {
+    void Awake() {
         meshFilter = gameObject.AddComponent<MeshFilter>();
         meshCollider = gameObject.AddComponent<MeshCollider>();
-        noise = new Noise(new NoiseOctave(0.15f, 3, 0), 4, 0.85f, 5, 1);
+        noise = new Noise(new NoiseOctave(0.08f, 3, 0), 4, 0.85f, 5, 1);
         noise.maskAgainstFirstOctave = true;
         SetupMesh();
     }
@@ -26,7 +26,7 @@ public class Planet : MonoBehaviour
 
     void SetupMesh() {
         meshFilter.sharedMesh = GenerateSphere(nbSegments);
-        meshCollider.sharedMesh = GenerateSphere(nbSegments / 3);
+        meshCollider.sharedMesh = GenerateSphere(Mathf.Max(nbSegments / 3, 1));
     }
 
     Mesh GenerateSphere(int nbSegments = 1) {
@@ -38,6 +38,9 @@ public class Planet : MonoBehaviour
 
         // transform cube face to "sphere face"
         Mesh upperMesh = GeneratePlaneXZ(2 * Vector2.one, nbSegments, nbSegments);
+        Vector3[] baseVertices = upperMesh.vertices;
+        // pivot to get transform at the center
+        Matrix4x4 translation = Matrix4x4.Translate(Vector3.up);
 
         // reorient the faces
         Quaternion upToBack = Quaternion.FromToRotation(Vector3.up, Vector3.back);
@@ -46,13 +49,13 @@ public class Planet : MonoBehaviour
             Mesh copy = Instantiate(upperMesh);
             Vector3[] vertices = copy.vertices;
             Vector3[] normals = new Vector3[vertices.Length];
+            Quaternion orientation = Quaternion.FromToRotation(Vector3.back, dir);
             for (int j = 0; j < vertices.Length; j++) {
                 Vector3 vertex = vertices[j];
                 vertex.y += 1;
 
                 vertex = EvenSpherePoint(vertex);
                 if (dir != Vector3.up) {
-                    Quaternion orientation = Quaternion.FromToRotation(Vector3.back, dir);
                     vertex = Matrix4x4.Rotate(orientation * upToBack) * vertex;
                 }
                 normals[j] = vertex;
@@ -66,9 +69,10 @@ public class Planet : MonoBehaviour
             copy.vertices = vertices;
             copy.normals = normals;
             combines[i].mesh = copy;
+            combines[i].transform = translation;
         }
 
-        mesh.CombineMeshes(combines, true, false);
+        mesh.CombineMeshes(combines);
         mesh.Optimize();
 
         return mesh;
@@ -135,4 +139,5 @@ public class Planet : MonoBehaviour
 
         return mesh;
     }
+
 }
