@@ -18,7 +18,6 @@ public class Attractor : MonoBehaviour
         MeshFilter meshFilter = GetComponent<MeshFilter>();
     }
 
-    float lastFrame = 0f;
     void FixedUpdate() {
         foreach (UnderGravity obj in UnderGravity.ones) {
             Vector3 down = (transform.position - obj.transform.position);
