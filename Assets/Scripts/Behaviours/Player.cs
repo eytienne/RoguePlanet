@@ -29,19 +29,26 @@ public class Player : MonoBehaviour
         inputActions.Disable();
     }
 
+    Vector2 move;
+
+    void Move(InputAction.CallbackContext context) {
+        move = context.ReadValue<Vector2>();
+    }
+
+    void Jump(InputAction.CallbackContext context) {
+        animator.CrossFadeInFixedTime("Jump", 0.1f);
+    }
+
     void FixedUpdate() {
+        float moveX = animator.GetFloat("moveX");
+        float moveY = animator.GetFloat("moveY");
+        animator.SetFloat("moveX", Mathf.Lerp(moveX, move.x, 25 * Time.fixedDeltaTime));
+        animator.SetFloat("moveY", Mathf.Lerp(moveY, move.y, 25 * Time.fixedDeltaTime));
+
         Vector3 gravityUp = (body.position - planet.transform.position).normalized;
         Quaternion targetRotation = Quaternion.FromToRotation(transform.up, gravityUp) * transform.rotation;
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 50 * Time.fixedDeltaTime);
     }
 
-    void Move(InputAction.CallbackContext context) {
-        Vector2 move = context.ReadValue<Vector2>();
-        animator.SetFloat("moveX", move.x);
-        animator.SetFloat("moveY", move.y);
-    }
 
-    void Jump(InputAction.CallbackContext context) {
-        animator.SetTrigger("jump");
-    }
 }

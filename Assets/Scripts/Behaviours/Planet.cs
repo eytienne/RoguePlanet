@@ -58,7 +58,7 @@ public class Planet : MonoBehaviour
                 if (dir != Vector3.up) {
                     vertex = Matrix4x4.Rotate(orientation * upToBack) * vertex;
                 }
-                normals[j] = vertex;
+                // normals[j] = vertex;
 
                 float effectiveRadius = 1 + noise.GetElevation(vertex);
                 vertex *= effectiveRadius;
@@ -67,12 +67,13 @@ public class Planet : MonoBehaviour
                 vertices[j] = vertex;
             }
             copy.vertices = vertices;
-            copy.normals = normals;
+            // copy.normals = normals;
             combines[i].mesh = copy;
             combines[i].transform = translation;
         }
 
         mesh.CombineMeshes(combines);
+        mesh.RecalculateNormals();
         mesh.Optimize();
 
         return mesh;
