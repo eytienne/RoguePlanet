@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 
 public class Planet : MonoBehaviour
 {
@@ -48,18 +50,16 @@ public class Planet : MonoBehaviour
             Vector3 dir = directions[i];
             Mesh copy = Instantiate(upperMesh);
             Vector3[] vertices = copy.vertices;
-            Vector3[] normals = new Vector3[vertices.Length];
             Quaternion orientation = Quaternion.FromToRotation(Vector3.back, dir);
             for (int j = 0; j < vertices.Length; j++) {
                 Vector3 vertex = vertices[j];
                 vertex.y += 1;
 
                 vertex = EvenSpherePoint(vertex);
+                vertex = vertex.normalized;
                 if (dir != Vector3.up) {
                     vertex = Matrix4x4.Rotate(orientation * upToBack) * vertex;
                 }
-                // normals[j] = vertex;
-
                 float effectiveRadius = 1 + noise.GetElevation(vertex);
                 vertex *= effectiveRadius;
 
@@ -73,7 +73,47 @@ public class Planet : MonoBehaviour
         }
 
         mesh.CombineMeshes(combines);
+        mesh.RecalculateBounds();
         mesh.RecalculateNormals();
+
+        // fixes normals discontinuities on faces edges
+        Vector3[] meshVertices = mesh.vertices;
+        Vector3[] meshNormals = mesh.normals;
+        var indicesNotTreated = meshVertices.Select((_, index) => index).ToDictionary(index => index);
+        const float epsilon = 1 / 10e2f;
+        for (int i = 0; i < meshVertices.Length; i++) {
+            if (!indicesNotTreated.ContainsKey(i)) {
+                continue;
+            }
+            indicesNotTreated.Remove(i);
+
+            List<int> same = new List<int>(1);
+            for (int j = 0; j < meshVertices.Length; j++) {
+                if (Vector3.Distance(meshVertices[j], meshVertices[i]) < epsilon) {
+                    same.Add(j);
+                    indicesNotTreated.Remove(j);
+                }
+            }
+            if (same.Count < 2) {
+                continue;
+            }
+            // Debug.Log("i: " + vi.index + " " + vi.vertex + " same: " + vi.same.Count());
+            Vector3 meanNormal = Vector3.zero;
+            for (int j = 0; j < same.Count; j++) {
+                int index = same[j];
+                Vector3 local = meshVertices[index];
+                Vector3 global = transform.TransformPoint(local);
+                Debug.DrawRay(transform.TransformPoint(meshVertices[index]), meshNormals[index], Color.red, Mathf.Infinity);
+                Vector3 cur = meshNormals[index];
+                meanNormal = Vector3.LerpUnclamped(cur, meanNormal, (float)j / (j + 1));
+            }
+            Debug.DrawRay(transform.TransformPoint(meshVertices[i]), meanNormal, Color.green, Mathf.Infinity);
+            foreach (int index in same) {
+                meshNormals[index] = meanNormal;
+            }
+        }
+        mesh.normals = meshNormals;
+
         mesh.Optimize();
 
         return mesh;
