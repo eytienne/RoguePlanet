@@ -1,121 +1,128 @@
-﻿using UnityEngine;
+﻿// GENERATED AUTOMATICALLY FROM 'Assets/Scripts/Player Controls.inputactions'
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
+[Serializable, RequireComponent(typeof(MeshRenderer)), ExecuteInEditMode]
 public class Planet : MonoBehaviour
 {
-    [SerializeField, Range(1, 100)]
-    int nbSegments = 10;
-    [SerializeField]
-    Noise noise;
 
-    MeshFilter meshFilter;
-    MeshCollider meshCollider;
+    [Range(1, 256)]
+    public int nbSegments = 10;
 
-    void Awake() {
-        meshFilter = gameObject.AddComponent<MeshFilter>();
-        meshCollider = gameObject.AddComponent<MeshCollider>();
-        noise = new Noise(new NoiseOctave(0.08f, 3, 0), 4, 0.85f, 5, 1);
-        noise.maskAgainstFirstOctave = true;
-        SetupMesh();
+    [Flags]
+    public enum Faces
+    {
+        Up = 1 << 0,
+        Down = 1 << 1,
+        Right = 1 << 2,
+        Left = 1 << 3,
+        Forward = 1 << 4,
+        Back = 1 << 5,
+        All = Up | Down | Right | Left | Forward | Back
+    }
+    public Faces toRender;
+    static readonly Vector3[] directions = {
+        Vector3.up,
+        Vector3.down,
+        Vector3.right,
+        Vector3.left,
+        Vector3.forward,
+        Vector3.back,
+    };
+
+    [ExecuteInEditMode, RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
+    public class Face : MonoBehaviour
+    {
+        public MeshFilter meshFilter;
+        public MeshRenderer meshRenderer;
+        // TODO MeshCollider
+
+        void Awake() {
+            meshFilter = GetComponent<MeshFilter>();
+            meshRenderer = GetComponent<MeshRenderer>();
+        }
+    }
+    Face[] faces = new Face[6];
+
+    public NoiseLayer[] noiseLayers;
+
+    public MeshRenderer meshRenderer;
+
+    public void Awake() {
+        meshRenderer = GetComponent<MeshRenderer>();
     }
 
-    void OnValidate() {
-        if (meshFilter == null)
-            return;
+    public void Initialize() {
+        Debug.Log("Initialize");
+        for (int i = 0; i < 6; i++) {
+            if (faces[i] == null) {
+                GameObject go = new GameObject("face");
+                go.transform.parent = transform;
+                Debug.Log("init face " + i);
+                faces[i] = go.AddComponent<Face>();
+            }
+            Face face = faces[i];
+            face.meshRenderer.sharedMaterial = meshRenderer.material;
+        }
+    }
+
+    void Update() {
+        // Debug.Log("Editor causes this Update");
+    }
+
+    public void OnInspectorUpdate() {
+        Debug.Log("OnInspectorUpdate");
+        Initialize();
         SetupMesh();
     }
 
     void SetupMesh() {
-        meshFilter.sharedMesh = GenerateSphere(nbSegments);
-        meshCollider.sharedMesh = GenerateSphere(Mathf.Max(nbSegments / 3, 1));
+        for (int i = 0; i < 6; i++) {
+            Face face = faces[i];
+            bool renderIt = toRender.HasFlag((Faces)(1 << i));
+            face.meshFilter.sharedMesh = renderIt ? GenerateFaceMesh(directions[i]) : null;
+        }
     }
 
-    Mesh GenerateSphere(int nbSegments = 1) {
+    public Mesh GenerateFaceMesh(Vector3 dir) {
+        Vector3 axisA = new Vector3(dir.y, dir.z, dir.x);
+        Vector3 axisB = Vector3.Cross(dir, axisA);
+
+        Vector3[] vertices = new Vector3[nbSegments * nbSegments];
+        int[] triangles = new int[(nbSegments - 1) * (nbSegments - 1) * 6];
+        int triIndex = 0;
+
+        for (int y = 0; y < nbSegments; y++) {
+            for (int x = 0; x < nbSegments; x++) {
+                int i = x + y * nbSegments;
+                Vector2 percent = new Vector2(x, y) / (nbSegments - 1);
+                Vector3 pointOnUnitCube = dir + (percent.x - .5f) * 2 * axisA + (percent.y - .5f) * 2 * axisB;
+                // Vector3 pointOnUnitSphere = pointOnUnitCube.normalized;
+                Vector3 even = EvenSpherePoint(pointOnUnitCube);
+                even *= 1 + CalculateElevation(even);
+                vertices[i] = even;
+
+                if (x != nbSegments - 1 && y != nbSegments - 1) {
+                    triangles[triIndex] = i;
+                    triangles[triIndex + 1] = i + nbSegments + 1;
+                    triangles[triIndex + 2] = i + nbSegments;
+
+                    triangles[triIndex + 3] = i;
+                    triangles[triIndex + 4] = i + 1;
+                    triangles[triIndex + 5] = i + nbSegments + 1;
+                    triIndex += 6;
+                }
+            }
+        }
+
         Mesh mesh = new Mesh();
-        mesh.name = "sphere";
-
-        CombineInstance[] combines = new CombineInstance[6];
-        Vector3[] directions = { Vector3.up, Vector3.down, Vector3.right, Vector3.left, Vector3.forward, Vector3.back };
-
-        // transform cube face to "sphere face"
-        Mesh upperMesh = GeneratePlaneXZ(2 * Vector2.one, nbSegments, nbSegments);
-        Vector3[] baseVertices = upperMesh.vertices;
-        // pivot to get transform at the center
-        Matrix4x4 translation = Matrix4x4.Translate(Vector3.up);
-
-        // reorient the faces
-        Quaternion upToBack = Quaternion.FromToRotation(Vector3.up, Vector3.back);
-        for (int i = 0; i < 6; i++) {
-            Vector3 dir = directions[i];
-            Mesh copy = Instantiate(upperMesh);
-            Vector3[] vertices = copy.vertices;
-            Quaternion orientation = Quaternion.FromToRotation(Vector3.back, dir);
-            for (int j = 0; j < vertices.Length; j++) {
-                Vector3 vertex = vertices[j];
-                vertex.y += 1;
-
-                vertex = EvenSpherePoint(vertex);
-                vertex = vertex.normalized;
-                if (dir != Vector3.up) {
-                    vertex = Matrix4x4.Rotate(orientation * upToBack) * vertex;
-                }
-                float effectiveRadius = 1 + noise.GetElevation(vertex);
-                vertex *= effectiveRadius;
-
-                vertex.y -= 1;
-                vertices[j] = vertex;
-            }
-            copy.vertices = vertices;
-            // copy.normals = normals;
-            combines[i].mesh = copy;
-            combines[i].transform = translation;
-        }
-
-        mesh.CombineMeshes(combines);
-        mesh.RecalculateBounds();
+        mesh.name = "face";
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
         mesh.RecalculateNormals();
-
-        // fixes normals discontinuities on faces edges
-        Vector3[] meshVertices = mesh.vertices;
-        Vector3[] meshNormals = mesh.normals;
-        var indicesNotTreated = meshVertices.Select((_, index) => index).ToDictionary(index => index);
-        const float epsilon = 1 / 10e2f;
-        for (int i = 0; i < meshVertices.Length; i++) {
-            if (!indicesNotTreated.ContainsKey(i)) {
-                continue;
-            }
-            indicesNotTreated.Remove(i);
-
-            List<int> same = new List<int>(1);
-            for (int j = 0; j < meshVertices.Length; j++) {
-                if (Vector3.Distance(meshVertices[j], meshVertices[i]) < epsilon) {
-                    same.Add(j);
-                    indicesNotTreated.Remove(j);
-                }
-            }
-            if (same.Count < 2) {
-                continue;
-            }
-            // Debug.Log("i: " + vi.index + " " + vi.vertex + " same: " + vi.same.Count());
-            Vector3 meanNormal = Vector3.zero;
-            for (int j = 0; j < same.Count; j++) {
-                int index = same[j];
-                Vector3 local = meshVertices[index];
-                Vector3 global = transform.TransformPoint(local);
-                Debug.DrawRay(transform.TransformPoint(meshVertices[index]), meshNormals[index], Color.red, Mathf.Infinity);
-                Vector3 cur = meshNormals[index];
-                meanNormal = Vector3.LerpUnclamped(cur, meanNormal, (float)j / (j + 1));
-            }
-            Debug.DrawRay(transform.TransformPoint(meshVertices[i]), meanNormal, Color.green, Mathf.Infinity);
-            foreach (int index in same) {
-                meshNormals[index] = meanNormal;
-            }
-        }
-        mesh.normals = meshNormals;
-
-        mesh.Optimize();
-
         return mesh;
     }
 
@@ -133,52 +140,25 @@ public class Planet : MonoBehaviour
         return ret;
     }
 
-    Mesh GeneratePlaneXZ(Vector2 size, int nbSegmentsX = 1, int nbSegmentsY = 1) {
-        Mesh mesh = new Mesh();
-        mesh.name = "planeXZ";
 
-        Vector2 halfSize = size / 2;
+    public float CalculateElevation(Vector3 pointOnUnitSphere) {
+        float firstLayerValue = 0;
+        float elevation = 0;
 
-        int nbSquares = nbSegmentsX * nbSegmentsY;
-        Vector3[] vertices = new Vector3[(nbSegmentsX + 1) * (nbSegmentsY + 1)];
-        Vector2[] uv = new Vector2[(nbSegmentsX + 1) * (nbSegmentsY + 1)];
-        int[] triangles = new int[nbSquares * 2 * 3];
-
-
-        for (int vi = 0, i = 0; i < nbSegmentsX + 1; i++) {
-            float kx = (float)i / nbSegmentsX;
-            for (int j = 0; j < nbSegmentsY + 1; j++, vi++) {
-                float ky = (float)j / nbSegmentsY;
-                vertices[vi] = new Vector3(-halfSize.x + kx * size.x, 0, -halfSize.y + ky * size.y);
-                uv[vi] = new Vector2(kx, ky);
+        if (noiseLayers.Length > 0) {
+            firstLayerValue = noiseLayers[0].GetNoise().GetElevation(pointOnUnitSphere);
+            if (noiseLayers[0].enabled) {
+                elevation = firstLayerValue;
             }
         }
 
-        for (int i = 0; i < nbSquares; i++) {
-            int ii = i / nbSegmentsY, jj = i % nbSegmentsY;
-            int v0i = ii * (nbSegmentsY + 1) + jj;
-            int columnStride = nbSegmentsY + 1;
-
-            // lower right triangle
-            triangles[i * 6 + 0] = v0i;
-            triangles[i * 6 + 1] = v0i + columnStride + 1;
-            triangles[i * 6 + 2] = v0i + columnStride;
-
-            // upper left triangle
-            triangles[i * 6 + 3] = v0i;
-            triangles[i * 6 + 4] = v0i + 1;
-            triangles[i * 6 + 5] = v0i + 1 + columnStride;
+        for (int i = 1; i < noiseLayers.Length; i++) {
+            if (noiseLayers[i].enabled) {
+                float mask = (noiseLayers[i].useFirstLayerAsMask) ? firstLayerValue : 1;
+                elevation += noiseLayers[i].GetNoise().GetElevation(pointOnUnitSphere) * mask;
+            }
         }
-
-        mesh.vertices = vertices;
-        mesh.uv = uv;
-        mesh.triangles = triangles;
-
-        mesh.RecalculateBounds();
-        mesh.RecalculateNormals();
-        mesh.Optimize();
-
-        return mesh;
+        return elevation;
     }
 
 }

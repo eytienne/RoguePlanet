@@ -1,13 +1,13 @@
 {
-    "FormattingOptions": {
-      "UseTabs": false,
-      "TabSize": 4,
-      "IndentationSize": 4,
-      "NewLinesForBracesInAnonymousMethods": false,
-      "NewLinesForBracesInControlBlocks": false,
-      "NewLinesForBracesInMethods": false,
-      "NewLineForElse": false,
-      "NewLinesForBracesInProperties": false,
-      "NewLinesForBracesInAccessors": false
-    }
-  }
+	"FormattingOptions": {
+		"UseTabs": false,
+		"TabSize": 4,
+		"IndentationSize": 4,
+		"NewLinesForBracesInAnonymousMethods": false,
+		"NewLinesForBracesInControlBlocks": false,
+		"NewLinesForBracesInMethods": false,
+		"NewLineForElse": false,
+		"NewLinesForBracesInProperties": false,
+		"NewLinesForBracesInAccessors": false
+	}
+}
