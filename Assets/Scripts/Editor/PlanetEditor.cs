@@ -4,48 +4,39 @@ using UnityEngine;
 using UnityEditor;
 
 [CustomEditor(typeof(Planet))]
-public class PlanetEditor : Editor {
+public class PlanetEditor : Editor
+{
 
     Planet planet;
     Editor shapeEditor;
-    Editor colourEditor;
 
-	public override void OnInspectorGUI()
-	{
-        using (var check = new EditorGUI.ChangeCheckScope())
-        {
+    public override void OnInspectorGUI() {
+        using (var check = new EditorGUI.ChangeCheckScope()) {
             base.OnInspectorGUI();
-            if (check.changed)
-            {
+            if (check.changed) {
                 planet.OnInspectorUpdate();
             }
         }
 
-        if (GUILayout.Button("Generate Planet"))
-        {
+        if (GUILayout.Button("Generate Planet")) {
             planet.OnInspectorUpdate();
         }
 
-        // DrawSettingsEditor(planet.shapeSettings, planet.OnShapeSettingsUpdated, ref planet.shapeSettingsFoldout, ref shapeEditor);
-        // DrawSettingsEditor(planet.colourSettings, planet.OnColourSettingsUpdated, ref planet.colourSettingsFoldout, ref colourEditor);
-	}
+        DrawSettingsEditor(planet.shape, planet.OnInspectorUpdate, ref planet.shapeFoldout, ref shapeEditor);
+    }
 
-    void DrawSettingsEditor(Object settings, System.Action onSettingsUpdated, ref bool foldout, ref Editor editor)
-    {
-        if (settings != null)
-        {
+    void DrawSettingsEditor(Object settings, System.Action onSettingsUpdated, ref bool foldout, ref Editor editor) {
+        if (settings != null) {
+            Debug.Log("step 0");
             foldout = EditorGUILayout.InspectorTitlebar(foldout, settings);
-            using (var check = new EditorGUI.ChangeCheckScope())
-            {
-                if (foldout)
-                {
+            using (var check = new EditorGUI.ChangeCheckScope()) {
+                if (foldout) {
+                    Debug.Log("step 1");
                     CreateCachedEditor(settings, null, ref editor);
                     editor.OnInspectorGUI();
 
-                    if (check.changed)
-                    {
-                        if (onSettingsUpdated != null)
-                        {
+                    if (check.changed) {
+                        if (onSettingsUpdated != null) {
                             onSettingsUpdated();
                         }
                     }
@@ -54,8 +45,7 @@ public class PlanetEditor : Editor {
         }
     }
 
-	private void OnEnable()
-	{
+    private void OnEnable() {
         planet = (Planet)target;
-	}
+    }
 }
