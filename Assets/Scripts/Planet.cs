@@ -47,7 +47,7 @@ public class Planet : MonoBehaviour
             meshFilter = GetComponent<MeshFilter>();
         }
     }
-    Face[] faces = new Face[6];
+    Face[] faces;
 
     public ShapeSettings shape;
     [HideInInspector]
@@ -55,12 +55,20 @@ public class Planet : MonoBehaviour
 
     public MeshRenderer meshRenderer;
 
+    int terrainLayer;
+
     public void Awake() {
         meshRenderer = GetComponent<MeshRenderer>();
         if (!shape) shape = new ShapeSettings();
+        terrainLayer = LayerMask.NameToLayer("Terrain");
+    }
+
+    public void Start() {
+        faces = GetComponentsInChildren<Face>();
     }
 
     public void Initialize() {
+        if(faces.Length != 6) faces = new Face[6];
         for (int i = 0; i < 6; i++) {
             if (faces[i] == null) {
                 GameObject go = new GameObject("face");
@@ -69,7 +77,9 @@ public class Planet : MonoBehaviour
                 Debug.Log("init face " + i);
                 faces[i] = go.AddComponent<Face>();
             }
+            ;
             Face face = faces[i];
+            face.gameObject.layer = terrainLayer;
             face.meshRenderer.sharedMaterial = meshRenderer.material;
         }
     }

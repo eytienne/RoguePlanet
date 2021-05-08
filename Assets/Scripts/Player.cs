@@ -1,54 +1,87 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
-    Animator animator;
-    PlayerControls inputActions;
-    [SerializeField]
-    RuntimeAnimatorController runtimeAnimatorController;
-    public Planet planet;
-    Rigidbody body;
+    public float moveSpeed;
 
-    void Start() {
-        animator = GetComponent<Animator>();
-        animator.runtimeAnimatorController = runtimeAnimatorController;
+    public Camera m_camera;
+    public Camera Camera {
+        get {
+            return m_camera;
+        }
+    }
+    Quaternion cameraOrientation;
+
+    public Light flash;
+    public float flashTotalSeconds;
+    public float flashMaxIntensity;
+
+    Rigidbody m_rigidbody;
+    PlayerControls inputActions;
+    public Vector2 move { get; private set; }
+
+    void Awake() {
+        m_rigidbody = GetComponent<Rigidbody>();
+        cameraOrientation = Quaternion.Euler(90, 0, 0);
+    }
+
+    void OnEnable() {
         inputActions = new PlayerControls();
         inputActions.Enable();
         inputActions.Player.Move.performed += Move;
-        inputActions.Player.Move.canceled += Move;
-        inputActions.Player.Jump.performed += Jump;
-        body = GetComponent<Rigidbody>();
-        body.constraints = RigidbodyConstraints.FreezeRotation;
-    }
-    void DebugEvent(InputAction.CallbackContext context) {
-        Debug.Log(context.phase + " " + context.ReadValueAsObject());
     }
 
-    void OnDestroy() {
+    void OnDisable() {
         inputActions.Disable();
     }
-
-    Vector2 move;
 
     void Move(InputAction.CallbackContext context) {
         move = context.ReadValue<Vector2>();
     }
 
-    void Jump(InputAction.CallbackContext context) {
-        animator.CrossFadeInFixedTime("Jump", 0.1f);
+    Vector2? prevMousePosition = null;
+
+    void Update() {
+        Resolution resolution = Screen.currentResolution;
+        // - 0.5f * new Vector2(resolution.height, resolution.width)
+        Vector2 mousePosition = Mouse.current.position.ReadValue();
+        mousePosition -= prevMousePosition ?? mousePosition;
+        prevMousePosition = mousePosition;
+        mousePosition.Normalize();
+        // Debug.Log("mousePos " + mousePosition);
+        Vector3 position = new Vector3(mousePosition.x, transform.position.y, mousePosition.y);
+        m_camera.transform.SetPositionAndRotation(transform.position + 25 * transform.up, transform.rotation * cameraOrientation);
+        // transform.LookAt(transform.TransformDirection(position), transform.up);
+        /*if (Input.GetButton("Fire1"))
+        {
+            StartCoroutine("flashNow");
+            Debug.Log("feu");
+            //Bullets.Instance.SpawnFromPool("Cube", transform.position, Quaternion.identity);
+        }*/
     }
 
     void FixedUpdate() {
-        float moveX = animator.GetFloat("moveX");
-        float moveY = animator.GetFloat("moveY");
-        animator.SetFloat("moveX", Mathf.Lerp(moveX, move.x, 25 * Time.fixedDeltaTime));
-        animator.SetFloat("moveY", Mathf.Lerp(moveY, move.y, 25 * Time.fixedDeltaTime));
-
-        Vector3 gravityUp = (body.position - planet.transform.position).normalized;
-        Quaternion targetRotation = Quaternion.FromToRotation(transform.up, gravityUp) * transform.rotation;
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 50 * Time.fixedDeltaTime);
+        m_rigidbody.MovePosition(m_rigidbody.position
+            + transform.TransformDirection(move.x, 0, move.y) * moveSpeed * Time.deltaTime);
     }
 
+    IEnumerator flashNow() {
+        float waitTime = flashTotalSeconds / 2;
+        // Get half of the seconds (One half to get brighter and one to get darker)
+        while (flash.intensity < flashMaxIntensity) {
+            flash.intensity += Time.deltaTime / waitTime;
+            yield return null;
+        }
+        while (flash.intensity > 0) {
+            flash.intensity -= Time.deltaTime / waitTime;
+            yield return null;
+        }
+        if (flash.intensity != 0) {
+            flash.intensity = 0;
+        };
+        yield return null;
+    }
 
 }

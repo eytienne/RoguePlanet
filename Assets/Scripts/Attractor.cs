@@ -18,7 +18,7 @@ public class Attractor : MonoBehaviour
     }
 
     void FixedUpdate() {
-        foreach (UnderGravity obj in UnderGravity.ones) {
+        foreach (Attracted obj in Attracted.ones) {
             Vector3 down = (transform.position - obj.transform.position);
             Vector3 gravity = down.normalized * G * nearMass * obj.body.mass / down.magnitude;
             obj.body.AddForce(gravity, ForceMode.Acceleration);
