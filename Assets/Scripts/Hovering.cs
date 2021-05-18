@@ -26,13 +26,10 @@ public class Hovering : MonoBehaviour
     int terrainLayer;
     float shipRadius;
 
-    Mesh sphere;
-
     void Awake() {
         m_rigidbody = GetComponent<Rigidbody>();
         terrainLayer = LayerMask.NameToLayer("Terrain");
         shipRadius = 4f * transform.lossyScale.z;
-        sphere = Resources.GetBuiltinResource<Mesh>("Sphere.fbx");
     }
 
     void Start() {
@@ -48,12 +45,10 @@ public class Hovering : MonoBehaviour
     void FixedUpdate() {
         _OnDrawGizmos = null;
         Vector3 groundDirection = (planet.transform.position - transform.position).normalized;
-        Debug.DrawRay(transform.position, groundDirection);
 
         Ray groundRay = new Ray(transform.position, groundDirection);
         RaycastHit groundHit;
         if (Physics.Raycast(groundRay, out groundHit, Mathf.Infinity, ~terrainLayer)) {
-            // m_rigidbody.MoveRotation(m_rigidbody.rotation * Quaternion.FromToRotation(transform.up, groundHit.normal).normalized);
             float hoverDelta = altitude - groundHit.distance;
             float upwardSpeed = m_rigidbody.velocity.y;
             float lift = hoverDelta * hoverForce - upwardSpeed * hoverDamp;
@@ -91,12 +86,10 @@ public class Hovering : MonoBehaviour
             Vector3 tangent1 = tangents[i];
             Vector3 tangent2 = tangents[i + k / 2];
             Vector3 normal = Vector3.Cross(tangent1, tangent2);
-            Debug.DrawRay(transform.position, normal, Color.white);
 
             groundNormal = Vector3.LerpUnclamped(groundNormal, normal, (float)(k == 0 ? 1 : k) / (k + 1));
         }
 
-        transform.rotation = Quaternion.FromToRotation(transform.up, groundNormal) * transform.rotation;
-        Debug.DrawRay(transform.position, -groundNormal, Color.black);
+        m_rigidbody.MoveRotation(Quaternion.FromToRotation(transform.up, groundNormal) * m_rigidbody.rotation);
     }
 }
