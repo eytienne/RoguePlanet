@@ -9,22 +9,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Utils;
 
 public class Player : MonoBehaviour
 {
     public Camera m_camera;
-    public Camera Camera {
-        get {
-            return m_camera;
-        }
-    }
 
     public Light flash;
     public float flashTotalSeconds;
     public float flashMaxIntensity;
 
     Rigidbody m_rigidbody;
-    readonly Quaternion cameraOrientation = Quaternion.Euler(90, 0, 0);
 
     public float moveSpeed = 10;
     public float accelerationTime = 0.5f;
@@ -54,8 +49,39 @@ public class Player : MonoBehaviour
        new Vector2(1 , 1),
     });
 
+    public GameObject planet;
+
+    Vector3 mouseDirection;
+    Vector3 moveDirection;
+
+    // It moves/levitates by measuring the distance to ground with a
+    // raycast then applying a force that decreases as the object
+    // reaches the desired levitation height.
+
+    // Vary the parameters below to get different control effects.
+    // For example, reducing the hover damping will tend to make the object bounce
+    // if it passes over an object underneath.
+    float moveForce = 20.0f;
+    float torque = 10.0f;
+    float altitude = 2.0f;
+    float hoverForce = 5.0f;
+    // The amount that the lifting force is reduced per unit of upward speed.
+    // This damping tends to stop the object from bouncing after passing over
+    // something.
+    float hoverDamp = 0.5f;
+
+    int terrainLayer;
+    float shipRadius;
+
     void Awake() {
         m_rigidbody = GetComponent<Rigidbody>();
+        terrainLayer = LayerMask.NameToLayer("Terrain");
+        shipRadius = transform.lossyScale.z;
+    }
+
+    void Start() {
+        m_rigidbody.drag = 0.5f;
+        m_rigidbody.angularDrag = 0.5f;
     }
 
     // void Start() {
@@ -103,23 +129,114 @@ public class Player : MonoBehaviour
         GameObject bullet = BulletsPool.Instance.SpawnFromPool("bullets", transform.position, Quaternion.identity);
         bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
     }
+    void OnDrawGizmos() {
+        _OnDrawGizmos?.Invoke();
+    }
+    event Action _OnDrawGizmos;
 
-Vector2 ? prevMousePosition = null;
+    Vector3 gravity;
 
     void Update() {
-        Resolution resolution = Screen.currentResolution;
-        // - 0.5f * new Vector2(resolution.height, resolution.width)
+        _OnDrawGizmos = null;
+
+        gravity = (planet.transform.position - transform.position).normalized;
+
         Vector2 mousePosition = Mouse.current.position.ReadValue();
-        mousePosition -= prevMousePosition ?? mousePosition;
-        prevMousePosition = mousePosition;
-        mousePosition.Normalize();
-        // Debug.Log("mousePos " + mousePosition);
-        Vector3 position = new Vector3(mousePosition.x, transform.position.y, mousePosition.y);
-        m_camera.transform.SetPositionAndRotation(transform.position + 25 * transform.up, transform.rotation * cameraOrientation);
+        Ray mouseRay = m_camera.ScreenPointToRay(mousePosition);
+
+        Plane plane = new Plane(-gravity, transform.position);
+        _OnDrawGizmos += () => {
+            // CGizmos.DrawPlane(plane, Vector3.one * 0.25f);
+        };
+        float enter;
+        if (plane.Raycast(mouseRay, out enter)) {
+            Vector3 hitPoint = mouseRay.GetPoint(enter);
+            mouseDirection = (hitPoint - transform.position).normalized;
+
+            _OnDrawGizmos += () => {
+                Gizmos.DrawSphere(hitPoint, 0.1f);
+            };
+        }
+
         // transform.LookAt(transform.TransformDirection(position), transform.up);
     }
 
+    Vector3 transformPosition;
+
+    void LateUpdate() {
+        Transform ctransform = m_camera.transform;
+        //ctransform.rotation = Quaternion.FromToRotation(-m_camera.transform.forward, gravity) * ctransform.rotation;
+
+        // Quaternion orientation = Quaternion.LookRotation(gravity, -gravity);
+        // ctransform.rotation = orientation;
+        ctransform.LookAt(transform, ctransform.up);
+
+        _OnDrawGizmos += () => {
+            Gizmos.color = Color.green;
+            Gizmos.DrawRay(ctransform.position, gravity);
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawRay(ctransform.position, transform.right);
+            Gizmos.color = Color.red;
+            Gizmos.DrawRay(ctransform.position, mouseDirection);
+        };
+    }
+
     void FixedUpdate() {
+        Vector3 groundDirection = (planet.transform.position - transform.position).normalized;
+
+        Ray groundRay = new Ray(transform.position, groundDirection);
+        RaycastHit groundHit;
+        if (Physics.Raycast(groundRay, out groundHit, Mathf.Infinity, ~terrainLayer)) {
+            float hoverDelta = altitude - groundHit.distance;
+            float upwardSpeed = m_rigidbody.velocity.y;
+            float lift = hoverDelta * hoverForce - upwardSpeed * hoverDamp;
+            m_rigidbody.AddForce(lift * -groundDirection);
+        }
+
+        const int nbTangents = 8;
+        Vector3[] tangents = new Vector3[nbTangents];
+        int k = 0;
+        for (int i = 0; i < nbTangents; i++) {
+            float angle = (float)i / nbTangents * 180;
+            float oppositeAngle = angle + 180;
+
+            Vector3 shiftBase = transform.forward * shipRadius;
+            Vector3 originA = transform.position + Quaternion.AngleAxis(angle, transform.up) * shiftBase;
+            Vector3 originB = transform.position + Quaternion.AngleAxis(oppositeAngle, transform.up) * shiftBase;
+            Debug.DrawRay(originA, groundDirection, Color.cyan);
+            Debug.DrawRay(originB, groundDirection, Color.blue);
+            Ray rayA = new Ray(originA, groundDirection);
+            RaycastHit hitA;
+            if (Physics.Raycast(rayA, out hitA, Mathf.Infinity, ~terrainLayer)) {
+                Ray rayB = new Ray(originB, groundDirection);
+                RaycastHit hitB;
+                if (Physics.Raycast(rayB, out hitB, Mathf.Infinity, ~terrainLayer)) {
+                    Vector3 tangent = (hitB.point - hitA.point).normalized;
+                    tangents[k] = tangent;
+                    k++;
+                }
+            }
+        }
+
+        Vector3 groundNormal = Vector3.zero;
+        for (int i = 0; i < k / 2; i++) {
+            Vector3 tangent1 = tangents[i];
+            Vector3 tangent2 = tangents[i + k / 2];
+            Vector3 normal = Vector3.Cross(tangent1, tangent2);
+
+            groundNormal = Vector3.LerpUnclamped(groundNormal, normal, (float)(k == 0 ? 1 : k) / (k + 1));
+        }
+        Debug.Log("groundNormal " + groundNormal + " magnitude " + groundNormal.magnitude);
+
+        Quaternion rotateToMouseDirection = Quaternion.FromToRotation(transform.forward, mouseDirection);
+        Quaternion rotateToGround = Quaternion.FromToRotation(transform.up, groundNormal);
+        m_rigidbody.MoveRotation(
+            rotateToMouseDirection *
+            rotateToGround *
+            m_rigidbody.rotation
+            );
+
+
         float t = 0;
         var ctx2 = lastMoves.Get(2);
         var ctx1 = lastMoves.Get(1);
@@ -142,13 +259,22 @@ Vector2 ? prevMousePosition = null;
         bool same = ctx0.Equals(ctx2);
 
         // choose the move direction from the last move or not
-        Vector2 moveDirection = move0.magnitude == 0
+        Vector2 _moveDirection = move0.magnitude == 0
             ? move1 // deceleration
             : move0 // acceleration
         ;
+        _moveDirection.Normalize();
+
+        Vector3 moveDirection = transform.TransformDirection(_moveDirection.x, 0, _moveDirection.y);
+        _OnDrawGizmos += () => {
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawRay(transform.position, moveDirection);
+        };
 
         m_rigidbody.MovePosition(m_rigidbody.position
-            + transform.TransformDirection(moveDirection.x, 0, moveDirection.y) * kvelocity * moveSpeed * Time.deltaTime);
+            + moveDirection * kvelocity * moveSpeed * Time.deltaTime);
+
+        m_camera.transform.position = transform.position + 25 * -gravity;
     }
 
     IEnumerator flashNow() {
