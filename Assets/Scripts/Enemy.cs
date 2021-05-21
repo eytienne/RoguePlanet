@@ -4,11 +4,13 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    private float movementSpeed = 10.0f;
+    [SerializeField] Transform target;
+    [SerializeField] float rotationalDamp = 1.25f;
+
+    private float movementSpeed = 2f;
     public GameObject objCollider;
     public GameObject player;
     private Rigidbody rb;
-    private Vector2 movement;
 
     public GameObject getCollider()
     {
@@ -22,18 +24,38 @@ public class Enemy : MonoBehaviour
         return true;
     }
 
-    public void seekPlayer(Vector3 direction)
+    /*public void seekPlayer(Vector3 direction)
     {
         rb.MovePosition(transform.position + (direction * movementSpeed * Time.deltaTime));
-    }
+    }*/
     public void OnCollisionEnter(Collision col)
     {
         if (col.gameObject.tag == "Bullet")
         {
-            //col.gameObject.SetActive(false);
+            col.gameObject.SetActive(false);
             this.death();
             ActiveEnemies.activeEnemies--;
         }
+
+        if (col.gameObject.tag == "Planet")
+        {
+            this.getCollider().SetActive(false);
+            this.death();
+            Debug.Log("touché planette enemy");
+            ActiveEnemies.activeEnemies--;
+        }
+    }
+
+    public void Turn()
+    {
+        Vector3 pos = target.position - transform.position;
+        Quaternion rot = Quaternion.LookRotation(pos);
+        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * rotationalDamp);
+    }
+
+    public void Move()
+    {
+        transform.LookAt(target);
     }
 
     void Start()
@@ -43,13 +65,12 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
-        Vector3 direction = player.transform.position - transform.position;
-        direction.Normalize();
-        movement = direction;
+        //movement = direction;
     }
 
     private void FixedUpdate()
     {
-        seekPlayer(movement);
+        //Turn();
+        Move();
     }
 }

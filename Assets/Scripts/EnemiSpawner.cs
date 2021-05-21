@@ -10,7 +10,8 @@ public class EnemiSpawner : MonoBehaviour
         {
             for(int i = 0; i < ObjectPooler.SharedInstance.amountToPool ; i++)
             {
-                waveManager();
+                int rand = Random.Range(0, 9);
+                waveManager(rand);
                 Debug.Log("spawn enemy nb : " + i);
             }
         }
@@ -18,17 +19,17 @@ public class EnemiSpawner : MonoBehaviour
             Debug.Log(ActiveEnemies.activeEnemies);
     }
 
-    void waveManager()
+    void waveManager(int rand)
     {
         GameObject[] spawner = GameObject.FindGameObjectsWithTag("Spawner");
         Debug.Log("spawn");
         GameObject enemi = ObjectPooler.SharedInstance.GetPooledObject();
-        Vector3 newPos = spawner[0].transform.position;
+        Vector3 newPos = spawner[rand].transform.position;
         newPos.x += ActiveEnemies.activeEnemies *5;
         if (enemi != null)
         {
             enemi.transform.position = newPos;
-            enemi.transform.rotation = spawner[0].transform.rotation;
+            enemi.transform.rotation = spawner[rand].transform.rotation;
             enemi.SetActive(true);
             ActiveEnemies.activeEnemies += 1;
             Debug.Log(ActiveEnemies.activeEnemies);

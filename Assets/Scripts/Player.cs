@@ -85,6 +85,7 @@ public class Player : MonoBehaviour
         inputActions = new PlayerControls();
         inputActions.Enable();
         inputActions.Player.Move.performed += Move;
+        inputActions.Player.Fire.performed += _ => Fire();
     }
 
     void OnDisable() {
@@ -95,7 +96,15 @@ public class Player : MonoBehaviour
         lastMoves.Enqueue(new _CallbackContext(context));
     }
 
-    Vector2? prevMousePosition = null;
+    void Fire()
+    {
+        StartCoroutine("flashNow");
+        Debug.Log("feu");
+        GameObject bullet = BulletsPool.Instance.SpawnFromPool("bullets", transform.position, Quaternion.identity);
+        bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
+    }
+
+Vector2 ? prevMousePosition = null;
 
     void Update() {
         Resolution resolution = Screen.currentResolution;
@@ -108,12 +117,6 @@ public class Player : MonoBehaviour
         Vector3 position = new Vector3(mousePosition.x, transform.position.y, mousePosition.y);
         m_camera.transform.SetPositionAndRotation(transform.position + 25 * transform.up, transform.rotation * cameraOrientation);
         // transform.LookAt(transform.TransformDirection(position), transform.up);
-        /*if (Input.GetButton("Fire1"))
-        {
-            StartCoroutine("flashNow");
-            Debug.Log("feu");
-            //Bullets.Instance.SpawnFromPool("Cube", transform.position, Quaternion.identity);
-        }*/
     }
 
     void FixedUpdate() {
