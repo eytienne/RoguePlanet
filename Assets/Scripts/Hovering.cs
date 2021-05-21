@@ -31,7 +31,7 @@ public class Hovering : MonoBehaviour
         m_rigidbody = GetComponent<Rigidbody>();
         terrainLayer = LayerMask.NameToLayer("Attractor");
         shipRadius = 4f * transform.lossyScale.z;
-        planet = GameObject.FindGameObjectWithTag("Planet");
+        planet = GameObject.Find("Planet");
         attractor = planet.transform.Find("attractor").gameObject;
     }
 
