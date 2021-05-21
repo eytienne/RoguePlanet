@@ -158,8 +158,6 @@ public class Player : MonoBehaviour
         // transform.LookAt(transform.TransformDirection(position), transform.up);
     }
 
-    Vector3 transformPosition;
-
     void LateUpdate() {
         Transform ctransform = m_camera.transform;
         //ctransform.rotation = Quaternion.FromToRotation(-m_camera.transform.forward, gravity) * ctransform.rotation;
