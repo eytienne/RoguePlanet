@@ -9,7 +9,7 @@ using UnityEngine;
 public class BezierCurve : MonoBehaviour
 {
 
-    public int nSegments;
+    public int nSegments = 10;
     public TModifier modifierX;
     public TModifier modifierY;
     public float scale = 10f;

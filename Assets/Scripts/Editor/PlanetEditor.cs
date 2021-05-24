@@ -42,7 +42,7 @@ public class PlanetEditor : Editor
         }
     }
 
-    private void OnEnable() {
+    void OnEnable() {
         planet = (Planet)target;
     }
 }

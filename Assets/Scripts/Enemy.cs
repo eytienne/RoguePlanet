@@ -17,30 +17,26 @@ public class Enemy : MonoBehaviour
         return this.objCollider;
     }
 
-    public bool death()
+    public bool Die()
     {
         this.getCollider().SetActive(false);
         Debug.Log("Ennemi détruit");
         return true;
     }
 
-    /*public void seekPlayer(Vector3 direction)
-    {
-        rb.MovePosition(transform.position + (direction * movementSpeed * Time.deltaTime));
-    }*/
     public void OnCollisionEnter(Collision col)
     {
         if (col.gameObject.tag == "Bullet")
         {
             col.gameObject.SetActive(false);
-            this.death();
+            Die();
             ActiveEnemies.activeEnemies--;
         }
 
         if (col.gameObject.tag == "Planet")
         {
-            this.getCollider().SetActive(false);
-            this.death();
+            getCollider().SetActive(false);
+            Die();
             Debug.Log("touché planette enemy");
             ActiveEnemies.activeEnemies--;
         }
@@ -63,14 +59,8 @@ public class Enemy : MonoBehaviour
         rb = this.GetComponent<Rigidbody>();
     }
 
-    void Update()
+    void FixedUpdate()
     {
-        //movement = direction;
-    }
-
-    private void FixedUpdate()
-    {
-        //Turn();
         Move();
     }
 }

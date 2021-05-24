@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GravityAttractor : MonoBehaviour
 {
-	public float gravity = -9.8f;
+	public float G = -9.8f;
 
 
 	public void Attract(Rigidbody body)
@@ -13,7 +13,7 @@ public class GravityAttractor : MonoBehaviour
 		Vector3 localUp = body.transform.up;
 
 		// Apply downwards gravity to body
-		body.AddForce(gravityUp * gravity);
+		body.AddForce(gravityUp * G);
 		// Allign bodies up axis with the centre of planet
 		body.rotation = Quaternion.FromToRotation(localUp, gravityUp) * body.rotation;
 	}

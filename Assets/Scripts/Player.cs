@@ -42,17 +42,21 @@ public class Player : MonoBehaviour
 
     FixedQueue<_CallbackContext> lastMoves = new FixedQueue<_CallbackContext>(lastMovesLimit);
 
-    static readonly Vector3[] ease = Util.Vector2sToVector3s(new Vector2[] {
+    static readonly Vector3[] speedCurve = Util.Vector2sToVector3s(new Vector2[] {
        new Vector2(0 , 0),
        new Vector2(0.5f , 0),
        new Vector2(0.5f , 1),
        new Vector2(1 , 1),
     });
 
-    public GameObject planet;
+    static readonly Func<float, Vector3> hoverSinusoidal = Tooling.SinusoidalFromBezierCubic01(Util.Vector2sToVector3s(new Vector2[] {
+       new Vector2(0 , 0),
+       new Vector2(0.7f , 0),
+       new Vector2(0.3f , 1),
+       new Vector2(1 , 1),
+    }));
 
-    Vector3 mouseDirection;
-    Vector3 moveDirection;
+    public GameObject planet;
 
     // It moves/levitates by measuring the distance to ground with a
     // raycast then applying a force that decreases as the object
@@ -61,14 +65,14 @@ public class Player : MonoBehaviour
     // Vary the parameters below to get different control effects.
     // For example, reducing the hover damping will tend to make the object bounce
     // if it passes over an object underneath.
-    public float moveForce = 20.0f;
-    public float torque = 10.0f;
     public float altitude = 2.0f;
     public float hoverForce = 5.0f;
     // The amount that the lifting force is reduced per unit of upward speed.
     // This damping tends to stop the object from bouncing after passing over
     // something.
     public float hoverDamp = 0.5f;
+    public float hoverPeriod = 1f;
+    public float hoverAmplitude = 2f;
 
     int terrainLayer;
     float shipRadius;
@@ -122,11 +126,10 @@ public class Player : MonoBehaviour
         lastMoves.Enqueue(new _CallbackContext(context));
     }
 
-    void Fire()
-    {
-        StartCoroutine("flashNow");
+    void Fire() {
+        StartCoroutine(FlashNow());
         Debug.Log("feu");
-        GameObject bullet = BulletsPool.Instance.SpawnFromPool("bullets", transform.position, Quaternion.identity);
+        GameObject bullet = BulletsPool.Instance.SpawnFromPool("bullets", transform.position);
         bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
     }
     void OnDrawGizmos() {
@@ -134,59 +137,38 @@ public class Player : MonoBehaviour
     }
     event Action _OnDrawGizmos;
 
-    Vector3 gravity;
-
-    void Update() {
-        _OnDrawGizmos = null;
-
-        gravity = (planet.transform.position - transform.position).normalized;
-
-        Vector2 mousePosition = Mouse.current.position.ReadValue();
-        Ray mouseRay = m_camera.ScreenPointToRay(mousePosition);
-
-        Plane plane = new Plane(-gravity, transform.position);
-        float enter;
-        if (plane.Raycast(mouseRay, out enter)) {
-            Vector3 hitPoint = mouseRay.GetPoint(enter);
-            mouseDirection = (hitPoint - transform.position).normalized;
-
-            _OnDrawGizmos += () => {
-                Gizmos.DrawSphere(hitPoint, 0.1f);
-            };
-        }
-
-        // transform.LookAt(transform.TransformDirection(position), transform.up);
-    }
-
     void LateUpdate() {
         Transform ctransform = m_camera.transform;
-        //ctransform.rotation = Quaternion.FromToRotation(-m_camera.transform.forward, gravity) * ctransform.rotation;
 
         // Quaternion orientation = Quaternion.LookRotation(gravity, -gravity);
         // ctransform.rotation = orientation;
         ctransform.LookAt(transform, ctransform.up);
-
-        _OnDrawGizmos += () => {
-            Gizmos.color = Color.green;
-            Gizmos.DrawRay(ctransform.position, gravity);
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawRay(ctransform.position, transform.right);
-            Gizmos.color = Color.red;
-            Gizmos.DrawRay(ctransform.position, mouseDirection);
-        };
     }
 
+    Quaternion _rotateToGround;
     void FixedUpdate() {
-        Vector3 groundDirection = (planet.transform.position - transform.position).normalized;
+        _OnDrawGizmos = null;
+        Vector3 gravity = (planet.transform.position - transform.position).normalized;
+        Vector3 groundDirection = gravity; // TODO shift it with velocity
 
         Ray groundRay = new Ray(transform.position, groundDirection);
         RaycastHit groundHit;
         if (Physics.Raycast(groundRay, out groundHit, Mathf.Infinity, ~terrainLayer)) {
             float hoverDelta = altitude - groundHit.distance;
-            float upwardSpeed = m_rigidbody.velocity.y;
-            float lift = hoverDelta * hoverForce - upwardSpeed * hoverDamp;
-            m_rigidbody.AddForce(lift * -groundDirection);
+            Vector3 velocity = m_rigidbody.velocity;
+            float upwardSpeed = (transform.worldToLocalMatrix * velocity).y;
+            float lift = hoverDelta * Mathf.Pow(hoverForce, 2);
+            lift += (1 * Mathf.Sign(hoverDelta)) * hoverAmplitude * hoverSinusoidal((Time.fixedTime % hoverPeriod) / hoverPeriod).y / lift;
+            Debug.Log($"lift {lift} velocity.y {velocity.y} upwardSpeed {upwardSpeed}");
+            m_rigidbody.AddForce(lift * -groundDirection, ForceMode.Acceleration);
         }
+
+        Vector3 transformUp = transform.up;
+        Vector3 forwardShift = Vector3.Cross(groundDirection, transform.right).normalized;
+        // Debug.Log("dot gravity transformDown" + Vector3.Dot(gravity, transformUp));
+        // Debug.DrawRay(transform.position, transform.forward, Color.red);
+        // Debug.DrawRay(transform.position, forwardShift, Color.green);
+        forwardShift *= Mathf.Sign(Vector3.Dot(transform.forward, forwardShift)) * shipRadius;
 
         const int nbTangents = 8;
         Vector3[] tangents = new Vector3[nbTangents];
@@ -195,11 +177,11 @@ public class Player : MonoBehaviour
             float angle = (float)i / nbTangents * 180;
             float oppositeAngle = angle + 180;
 
-            Vector3 shiftBase = transform.forward * shipRadius;
-            Vector3 originA = transform.position + Quaternion.AngleAxis(angle, transform.up) * shiftBase;
-            Vector3 originB = transform.position + Quaternion.AngleAxis(oppositeAngle, transform.up) * shiftBase;
-            Debug.DrawRay(originA, groundDirection, Color.cyan);
-            Debug.DrawRay(originB, groundDirection, Color.blue);
+            Vector3 originA = transform.position + Quaternion.AngleAxis(angle, -groundDirection) * forwardShift;
+            Vector3 originB = transform.position + Quaternion.AngleAxis(oppositeAngle, -groundDirection) * forwardShift;
+            // Debug.DrawRay(originA, groundDirection, Color.cyan);
+            // Debug.DrawRay(originB, groundDirection, Color.blue);
+
             Ray rayA = new Ray(originA, groundDirection);
             RaycastHit hitA;
             if (Physics.Raycast(rayA, out hitA, Mathf.Infinity, ~terrainLayer)) {
@@ -213,19 +195,55 @@ public class Player : MonoBehaviour
             }
         }
 
+        Plane gravityPlane = new Plane(-gravity, transform.position);
         Vector3 groundNormal = Vector3.zero;
         for (int i = 0; i < k / 2; i++) {
             Vector3 tangent1 = tangents[i];
             Vector3 tangent2 = tangents[i + k / 2];
-            Vector3 normal = Vector3.Cross(tangent1, tangent2);
+            Vector3 normal = Vector3.Cross(tangent1, tangent2).normalized;
+            normal *= Mathf.Sign(Vector3.Dot(transformUp, normal));
 
-            groundNormal = Vector3.LerpUnclamped(groundNormal, normal, (float)(k == 0 ? 1 : k) / (k + 1)).normalized;
+            // Debug.DrawRay(transform.position, normal.normalized, Color.red);
+            groundNormal = Vector3.LerpUnclamped(groundNormal, normal, (float)(k == 0 ? 1 : k) / (k + 1));
         }
-        Debug.Log("groundNormal " + groundNormal + " magnitude " + groundNormal.magnitude);
-
-        Quaternion rotateToMouseDirection = Quaternion.FromToRotation(transform.forward, mouseDirection);
         Quaternion rotateToGround = Quaternion.FromToRotation(transform.up, groundNormal);
-        m_rigidbody.MoveRotation(rotateToMouseDirection * rotateToGround * m_rigidbody.rotation);
+        rotateToGround = _rotateToGround = Quaternion.SlerpUnclamped(_rotateToGround, rotateToGround, 30 * Time.fixedDeltaTime);
+        // Debug.Log("groundNormal " + groundNormal + " magnitude " + groundNormal.magnitude + " rotateToGround " + rotateToGround);
+
+        Vector3 _mouseDirection = Vector3.zero;
+        Vector2 mousePosition = Mouse.current.position.ReadValue();
+        Ray mouseRay = m_camera.ScreenPointToRay(mousePosition);
+
+        // Debug.Log("dot gravity groundNormal: " + Vector3.Dot(gravity, groundNormal));
+        float enter;
+        if (gravityPlane.Raycast(mouseRay, out enter)) {
+            Vector3 hitPoint = mouseRay.GetPoint(enter);
+            _mouseDirection = (hitPoint - transform.position).normalized;
+
+            _OnDrawGizmos += () => {
+                // Gizmos.DrawSphere(hitPoint, 0.1f);
+                // Gizmos.color = Color.cyan;
+                // CGizmos.DrawPlane(gravityPlane, transform.position, 0.25f * Vector3.one);
+            };
+        }
+
+        Plane normalPlane = new Plane(groundNormal, transform.position);
+        Vector3 mouseDirection = Vector3.ProjectOnPlane(_mouseDirection, groundNormal).normalized;
+        _OnDrawGizmos += () => {
+            // Gizmos.color = Color.magenta;
+            // CGizmos.DrawPlane(normalPlane, transform.position, 0.25f * Vector3.one);
+            // Gizmos.color = Color.black;
+            // Gizmos.DrawRay(transform.position, _mouseDirection);
+            // Gizmos.color = Color.yellow;
+            // Gizmos.DrawRay(transform.position, mouseDirection);
+        };
+        Quaternion rotateToMouseDirection = Quaternion.FromToRotation(transform.forward, mouseDirection);
+
+        m_rigidbody.MoveRotation(
+            rotateToMouseDirection *
+            rotateToGround *
+            m_rigidbody.rotation
+            );
 
         float t = 0;
         var ctx2 = lastMoves.Get(2);
@@ -241,7 +259,7 @@ public class Player : MonoBehaviour
         } else { // only direction change
             t = 1;
         }
-        float kvelocity = Tooling.GetBezierCubicPoint(Mathf.Clamp01(t), ease).y;
+        float kvelocity = Tooling.GetBezierCubicPoint(Mathf.Clamp01(t), speedCurve).y;
         if (move0.magnitude == 0) {
             kvelocity = 1 - kvelocity;
         }
@@ -257,25 +275,19 @@ public class Player : MonoBehaviour
         Resolution resolution = Screen.currentResolution;
         Ray forwardRay = m_camera.ScreenPointToRay(new Vector2(resolution.width / 2, resolution.height));
 
-        Plane plane = new Plane(-gravity, transform.position);
-        float enter;
-        if (plane.Raycast(forwardRay, out enter)) {
+        if (gravityPlane.Raycast(forwardRay, out enter)) {
             Vector3 hitPoint = forwardRay.GetPoint(enter);
-            Vector3 forward = (hitPoint - transform.position).normalized;
+            Vector3 mouseForward = (hitPoint - transform.position).normalized;
 
-            Vector3 moveDirection = Quaternion.FromToRotation(transform.forward, forward) * transform.TransformDirection(_moveDirection.x, 0, _moveDirection.y);
-            _OnDrawGizmos += () => {
-                Gizmos.color = Color.magenta;
-                Gizmos.DrawRay(transform.position, moveDirection);
-            };
+            Vector3 moveDirection = Quaternion.FromToRotation(transform.forward, mouseForward) * transform.TransformDirection(_moveDirection.x, 0, _moveDirection.y);
 
-            m_rigidbody.MovePosition(m_rigidbody.position
-                + moveDirection * kvelocity * moveSpeed * Time.deltaTime);
+            const float C = 100;
+            m_rigidbody.velocity = C * moveDirection * kvelocity * moveSpeed * Time.deltaTime;
         }
         m_camera.transform.position = transform.position + 25 * -gravity;
     }
 
-    IEnumerator flashNow() {
+    IEnumerator FlashNow() {
         float waitTime = flashTotalSeconds / 2;
         // Get half of the seconds (One half to get brighter and one to get darker)
         while (flash.intensity < flashMaxIntensity) {

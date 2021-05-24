@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -24,11 +25,11 @@ namespace Utils
             Gizmos.DrawMesh(planeMesh, position ?? Vector3.zero, rotation ?? Quaternion.identity, scale ?? Vector3.one);
         }
 
-        public static void DrawPlane(Plane? plane = null, Vector3? scale = null) {
+        public static void DrawPlane(Plane? plane = null, Vector3? position = null, Vector3? scale = null) {
             if (plane is Plane _plane) {
-                DrawPlane(-_plane.distance * _plane.normal, Quaternion.FromToRotation(Vector3.up, _plane.normal), scale);
+                DrawPlane(position, Quaternion.FromToRotation(Vector3.up, _plane.normal), scale);
             } else {
-                DrawPlane(null, null, scale);
+                DrawPlane(null as Vector3?, null, scale);
             }
         }
     }
