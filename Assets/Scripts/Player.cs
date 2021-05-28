@@ -130,6 +130,7 @@ public class Player : MonoBehaviour
         StartCoroutine(FlashNow());
         Debug.Log("feu");
         GameObject bullet = BulletsPool.Instance.SpawnFromPool("bullets", transform.position);
+        bullet.GetComponent<Bullet>().setTime(Time.time);
         bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
     }
     void OnDrawGizmos() {
@@ -159,7 +160,7 @@ public class Player : MonoBehaviour
             float upwardSpeed = (transform.worldToLocalMatrix * velocity).y;
             float lift = hoverDelta * Mathf.Pow(hoverForce, 2);
             lift += (1 * Mathf.Sign(hoverDelta)) * hoverAmplitude * hoverSinusoidal((Time.fixedTime % hoverPeriod) / hoverPeriod).y / lift;
-            Debug.Log($"lift {lift} velocity.y {velocity.y} upwardSpeed {upwardSpeed}");
+            //Debug.Log($"lift {lift} velocity.y {velocity.y} upwardSpeed {upwardSpeed}");
             m_rigidbody.AddForce(lift * -groundDirection, ForceMode.Acceleration);
         }
 
@@ -170,42 +171,10 @@ public class Player : MonoBehaviour
         // Debug.DrawRay(transform.position, forwardShift, Color.green);
         forwardShift *= Mathf.Sign(Vector3.Dot(transform.forward, forwardShift)) * shipRadius;
 
-        const int nbTangents = 8;
-        Vector3[] tangents = new Vector3[nbTangents];
-        int k = 0;
-        for (int i = 0; i < nbTangents; i++) {
-            float angle = (float)i / nbTangents * 180;
-            float oppositeAngle = angle + 180;
-
-            Vector3 originA = transform.position + Quaternion.AngleAxis(angle, -groundDirection) * forwardShift;
-            Vector3 originB = transform.position + Quaternion.AngleAxis(oppositeAngle, -groundDirection) * forwardShift;
-            // Debug.DrawRay(originA, groundDirection, Color.cyan);
-            // Debug.DrawRay(originB, groundDirection, Color.blue);
-
-            Ray rayA = new Ray(originA, groundDirection);
-            RaycastHit hitA;
-            if (Physics.Raycast(rayA, out hitA, Mathf.Infinity, ~terrainLayer)) {
-                Ray rayB = new Ray(originB, groundDirection);
-                RaycastHit hitB;
-                if (Physics.Raycast(rayB, out hitB, Mathf.Infinity, ~terrainLayer)) {
-                    Vector3 tangent = (hitB.point - hitA.point).normalized;
-                    tangents[k] = tangent;
-                    k++;
-                }
-            }
-        }
+        Vector3 groundNormal = transform.GetGroundNormal(planet, groundDirection, terrainLayer);
+        
 
         Plane gravityPlane = new Plane(-gravity, transform.position);
-        Vector3 groundNormal = Vector3.zero;
-        for (int i = 0; i < k / 2; i++) {
-            Vector3 tangent1 = tangents[i];
-            Vector3 tangent2 = tangents[i + k / 2];
-            Vector3 normal = Vector3.Cross(tangent1, tangent2).normalized;
-            normal *= Mathf.Sign(Vector3.Dot(transformUp, normal));
-
-            // Debug.DrawRay(transform.position, normal.normalized, Color.red);
-            groundNormal = Vector3.LerpUnclamped(groundNormal, normal, (float)(k == 0 ? 1 : k) / (k + 1));
-        }
         Quaternion rotateToGround = Quaternion.FromToRotation(transform.up, groundNormal);
         rotateToGround = _rotateToGround = Quaternion.SlerpUnclamped(_rotateToGround, rotateToGround, 30 * Time.fixedDeltaTime);
         // Debug.Log("groundNormal " + groundNormal + " magnitude " + groundNormal.magnitude + " rotateToGround " + rotateToGround);
@@ -240,9 +209,9 @@ public class Player : MonoBehaviour
         Quaternion rotateToMouseDirection = Quaternion.FromToRotation(transform.forward, mouseDirection);
 
         m_rigidbody.MoveRotation(
-            rotateToMouseDirection *
+            (rotateToMouseDirection *
             rotateToGround *
-            m_rigidbody.rotation
+            m_rigidbody.rotation).normalized
             );
 
         float t = 0;
