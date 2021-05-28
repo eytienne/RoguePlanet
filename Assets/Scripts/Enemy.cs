@@ -11,7 +11,7 @@ public class Enemy : MonoBehaviour
     public GameObject objCollider;
     public GameObject player;
     private Rigidbody rb;
-
+    AudioSource audioData;
     public GameObject getCollider()
     {
         return this.objCollider;
@@ -19,6 +19,7 @@ public class Enemy : MonoBehaviour
 
     public bool Die()
     {
+        audioData.Play();
         this.getCollider().SetActive(false);
         Debug.Log("Ennemi détruit");
         return true;
@@ -56,6 +57,7 @@ public class Enemy : MonoBehaviour
 
     void Start()
     {
+        audioData = GetComponent<AudioSource>();
         rb = this.GetComponent<Rigidbody>();
     }
 

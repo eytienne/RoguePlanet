@@ -14,7 +14,7 @@ using Utils;
 public class Player : MonoBehaviour
 {
     public Camera m_camera;
-
+    AudioSource audioData;
     public Light flash;
     public float fireRate;
 
@@ -85,6 +85,7 @@ public class Player : MonoBehaviour
     }
 
     void Start() {
+        audioData = GetComponent<AudioSource>();
         m_rigidbody.drag = 0.5f;
         m_rigidbody.angularDrag = 0.5f;
     }
@@ -308,6 +309,7 @@ public class Player : MonoBehaviour
         while (true)
         {
             Debug.Log("feu");
+            audioData.Play();
             GameObject bullet = BulletsPool.Instance.SpawnFromPool("bullets", transform.position);
             bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
             yield return new WaitForSeconds(fireRate);
