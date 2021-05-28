@@ -128,7 +128,6 @@ public class Player : MonoBehaviour
 
     void Fire() {
         StartCoroutine(FlashNow());
-        Debug.Log("feu");
         GameObject bullet = BulletsPool.Instance.SpawnFromPool("bullets", transform.position);
         bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
     }
@@ -159,7 +158,7 @@ public class Player : MonoBehaviour
             float upwardSpeed = (transform.worldToLocalMatrix * velocity).y;
             float lift = hoverDelta * Mathf.Pow(hoverForce, 2);
             lift += (1 * Mathf.Sign(hoverDelta)) * hoverAmplitude * hoverSinusoidal((Time.fixedTime % hoverPeriod) / hoverPeriod).y / lift;
-            Debug.Log($"lift {lift} velocity.y {velocity.y} upwardSpeed {upwardSpeed}");
+            // Debug.Log($"lift {lift} velocity.y {velocity.y} upwardSpeed {upwardSpeed}");
             m_rigidbody.AddForce(lift * -groundDirection, ForceMode.Acceleration);
         }
 
@@ -238,12 +237,12 @@ public class Player : MonoBehaviour
             // Gizmos.DrawRay(transform.position, mouseDirection);
         };
         Quaternion rotateToMouseDirection = Quaternion.FromToRotation(transform.forward, mouseDirection);
-
+        // Debug.Log($"unit length: rotateToMouseDirection {rotateToMouseDirection} rotateToGround {rotateToGround}");
         m_rigidbody.MoveRotation(
-            rotateToMouseDirection *
-            rotateToGround *
+            rotateToMouseDirection.normalized *
+            rotateToGround.normalized *
             m_rigidbody.rotation
-            );
+        );
 
         float t = 0;
         var ctx2 = lastMoves.Get(2);
