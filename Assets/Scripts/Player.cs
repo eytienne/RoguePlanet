@@ -16,8 +16,7 @@ public class Player : MonoBehaviour
     public Camera m_camera;
 
     public Light flash;
-    public float flashTotalSeconds;
-    public float flashMaxIntensity;
+    public float fireRate;
 
     Rigidbody m_rigidbody;
 
@@ -25,7 +24,8 @@ public class Player : MonoBehaviour
     public float accelerationTime = 0.5f;
     public float decelerationTime = 0.4f;
     public float delayBeforeStop = 0.35f;
-    PlayerControls inputActions;
+    [SerializeField]
+    public PlayerControls inputActions { get; private set; }
     const int lastMovesLimit = 3;
 
     // struct to persist the data of the Input System context getters which only return global current values
@@ -81,6 +81,7 @@ public class Player : MonoBehaviour
         m_rigidbody = GetComponent<Rigidbody>();
         terrainLayer = LayerMask.NameToLayer("Terrain");
         shipRadius = transform.lossyScale.z;
+        inputActions = new PlayerControls();
     }
 
     void Start() {
@@ -112,10 +113,10 @@ public class Player : MonoBehaviour
     // }
 
     void OnEnable() {
-        inputActions = new PlayerControls();
         inputActions.Enable();
         inputActions.Player.Move.performed += Move;
-        inputActions.Player.Fire.performed += _ => Fire();
+        inputActions.Player.Fire.started += _ => Fire();
+        inputActions.Player.Fire.canceled += _ => notFire();
     }
 
     void OnDisable() {
@@ -125,12 +126,19 @@ public class Player : MonoBehaviour
     void Move(InputAction.CallbackContext context) {
         lastMoves.Enqueue(new _CallbackContext(context));
     }
-
-    void Fire() {
-        StartCoroutine(FlashNow());
-        Debug.Log("feu");
-        GameObject bullet = BulletsPool.Instance.SpawnFromPool("bullets", transform.position);
-        bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
+    private Coroutine CoroutineFire;
+    private Coroutine CoroutineFlash;
+    void Fire()
+    {
+        CoroutineFlash = StartCoroutine(FlashNow());
+        CoroutineFire = StartCoroutine(TirNow());
+    }
+    void notFire()
+    {
+        StopCoroutine(CoroutineFire);
+        StopCoroutine(CoroutineFlash);
+        flash.intensity = 0;
+        Debug.Log("pasfeu");
     }
     void OnDrawGizmos() {
         _OnDrawGizmos?.Invoke();
@@ -159,7 +167,7 @@ public class Player : MonoBehaviour
             float upwardSpeed = (transform.worldToLocalMatrix * velocity).y;
             float lift = hoverDelta * Mathf.Pow(hoverForce, 2);
             lift += (1 * Mathf.Sign(hoverDelta)) * hoverAmplitude * hoverSinusoidal((Time.fixedTime % hoverPeriod) / hoverPeriod).y / lift;
-            Debug.Log($"lift {lift} velocity.y {velocity.y} upwardSpeed {upwardSpeed}");
+            //Debug.Log($"lift {lift} velocity.y {velocity.y} upwardSpeed {upwardSpeed}");
             m_rigidbody.AddForce(lift * -groundDirection, ForceMode.Acceleration);
         }
 
@@ -239,11 +247,7 @@ public class Player : MonoBehaviour
         };
         Quaternion rotateToMouseDirection = Quaternion.FromToRotation(transform.forward, mouseDirection);
 
-        m_rigidbody.MoveRotation(
-            rotateToMouseDirection *
-            rotateToGround *
-            m_rigidbody.rotation
-            );
+        m_rigidbody.MoveRotation((rotateToMouseDirection * rotateToGround * m_rigidbody.rotation).normalized);
 
         float t = 0;
         var ctx2 = lastMoves.Get(2);
@@ -287,21 +291,27 @@ public class Player : MonoBehaviour
         m_camera.transform.position = transform.position + 25 * -gravity;
     }
 
-    IEnumerator FlashNow() {
-        float waitTime = flashTotalSeconds / 2;
-        // Get half of the seconds (One half to get brighter and one to get darker)
-        while (flash.intensity < flashMaxIntensity) {
-            flash.intensity += Time.deltaTime / waitTime;
-            yield return null;
-        }
-        while (flash.intensity > 0) {
-            flash.intensity -= Time.deltaTime / waitTime;
-            yield return null;
-        }
-        if (flash.intensity != 0) {
+    IEnumerator FlashNow()
+    {
+        float waitTime = fireRate / 2;
+        // Get half of the seconds (One half to get brighter and one to get darker
+        while (true)
+        {
+            flash.intensity = 1;
+            yield return new WaitForSeconds(waitTime);
             flash.intensity = 0;
-        };
-        yield return null;
+            yield return new WaitForSeconds(waitTime);
+        }
+    }
+    IEnumerator TirNow()
+    {
+        while (true)
+        {
+            Debug.Log("feu");
+            GameObject bullet = BulletsPool.Instance.SpawnFromPool("bullets", transform.position);
+            bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
+            yield return new WaitForSeconds(fireRate);
+        }
     }
 
 }
