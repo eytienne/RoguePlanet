@@ -53,7 +53,7 @@ public class Enemy : MonoBehaviour
     public void Move()
     {
         transform.LookAt(target.transform.position);
-        transform.position += transform.forward * 15 * Time.deltaTime;
+        transform.position += transform.forward * 25 * Time.deltaTime;
         //Debug.Log(target.transform.position);
     }
 

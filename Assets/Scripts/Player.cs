@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utils;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
@@ -27,7 +28,8 @@ public class Player : MonoBehaviour
     [SerializeField]
     public PlayerControls inputActions { get; private set; }
     const int lastMovesLimit = 3;
-
+    private float life = 1;
+    public Slider slider;
     // struct to persist the data of the Input System context getters which only return global current values
     struct _CallbackContext
     {
@@ -85,6 +87,7 @@ public class Player : MonoBehaviour
     }
 
     void Start() {
+        slider.value = 1;
         audioData = GetComponent<AudioSource>();
         m_rigidbody.drag = 0.5f;
         m_rigidbody.angularDrag = 0.5f;
@@ -291,7 +294,28 @@ public class Player : MonoBehaviour
         }
         m_camera.transform.position = transform.position + 25 * -gravity;
     }
-
+    public void OnCollisionEnter(Collision col)
+    {
+        
+        if (col.gameObject.tag == "Enemy")
+        {
+            //GameObject imageObject = GameObject.FindGameObjectWithTag("life" + lives);
+            //imageObject.SetActive(false);
+            if (life > 0.01)
+            {
+                life -= 0.1f;                //affichage d'une barre bomportaznt les trois images de vaisseau et qui décroit en fonction des dégâts pris
+                //bruit de dégats
+                Debug.Log(life);
+            }
+            if (life == 0.10)
+            {
+                life -= 0.1f;
+                //bruit de destruction
+                //gameover
+            }
+            slider.value = life;
+        }
+    }
     IEnumerator FlashNow()
     {
         float waitTime = fireRate / 2;

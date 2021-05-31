@@ -8,6 +8,7 @@ TagManager:
   - Planet
   - Attractor
   - Bullet
+  - Enemy
   layers:
   - Default
   - TransparentFX
