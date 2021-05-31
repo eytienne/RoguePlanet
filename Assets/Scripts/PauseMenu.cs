@@ -6,7 +6,8 @@ using UnityEngine.InputSystem;
 public class PauseMenu : MonoBehaviour
 {
     public Player player;
-    public GameObject Canvas;
+    public GameObject PauseCanvas;
+    public GameObject OptionsCanvas;
     float currentTimeScale;
     void Start()
     {
@@ -16,13 +17,13 @@ public class PauseMenu : MonoBehaviour
     {
         if (Time.timeScale == 0f)
         {
-            Canvas.SetActive(false);
+            PauseCanvas.SetActive(false);
             Time.timeScale = currentTimeScale;
             Debug.Log("desactiver");
         }
         else
         {
-            Canvas.SetActive(true); 
+            PauseCanvas.SetActive(true); 
             currentTimeScale = Time.timeScale;
             Time.timeScale = 0f;
             Debug.Log("activer");
@@ -31,5 +32,19 @@ public class PauseMenu : MonoBehaviour
     public void Quitter()
     {
         Application.Quit();
+    }
+    public void Options()
+    {
+        if (PauseCanvas.activeSelf)
+        {
+            PauseCanvas.SetActive(false);
+            OptionsCanvas.SetActive(true);
+        }
+        else
+        {
+            PauseCanvas.SetActive(true);
+            OptionsCanvas.SetActive(false);
+        }
+        
     }
 }
