@@ -55,25 +55,20 @@ public class Pool : MonoBehaviour
     }
 
     public GameObject GetObject() {
-        Debug.Log("GetObject start");
         return GetPooledObject().gameObject;
     }
 
     public Pooled GetPooledObject() {
-        Debug.Log("GetPooledObject start");
         Pooled instance;
         if (available.Count > 0) {
             instance = available.Pop();
-            Debug.Log("instance 1 " + instance);
         } else if (allowGettingUsedWhenNoAvailable) {
             instance = inUse.First.Value;
-            Debug.Log("instance 2 " + instance);
             inUse.RemoveFirst();
         } else {
             throw new NoAvailableObjectException();
         }
         inUse.AddLast(instance);
-        Debug.Log("GetPooledObject " + instance);
         return instance;
     }
 

@@ -22,7 +22,6 @@ public class Sinusoidal : MonoBehaviour
 
     void OnValidate() {
         if (lineRenderer == null) return;
-        Debug.Log("OnValidate sinusoidal");
         Initialize();
     }
 
