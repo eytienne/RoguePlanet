@@ -6,6 +6,7 @@ using UnityEngine;
 public class Bullet : MonoBehaviour
 {
     public GameObject player;
+    private double time;
 
     Rigidbody m_rigidbody;
 
@@ -29,10 +30,16 @@ public class Bullet : MonoBehaviour
     }
 
     void FixedUpdate() {
-        if (m_rigidbody.velocity.magnitude < 1) {
+        Debug.Log(Time.time - time);
+        if (Time.time - time > 2) {
             gameObject.SetActive(false);
-            Debug.Log("Velocity trop basse");
+            Debug.Log("Trop long");
         }
+    }
+
+    public void setTime(double t)
+    {
+        this.time = t;
     }
 
 }
