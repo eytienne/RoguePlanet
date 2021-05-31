@@ -12,17 +12,6 @@ namespace Utils
         }
     }
 
-    public static class Extensions
-    {
-        public static T Pop<T>(this List<T> list) {
-            int lastIndex = list.Count - 1;
-            if (lastIndex == -1) throw new InvalidOperationException("Can't pop on an empty list");
-            T last = list[lastIndex];
-            list.RemoveAt(lastIndex);
-            return last;
-        }
-    }
-
     public class CGizmos : MonoBehaviour
     {
         static Mesh planeMesh;
@@ -48,15 +37,21 @@ namespace Utils
 
     public static class Extensions
     {
-        public const int nbTangents = 8;
-        public static Vector3 GetGroundNormal(this Transform transform, GameObject planet, Vector3 groundDirection, int terrainLayer)
-        {
+        public static T Pop<T>(this List<T> list) {
+            int lastIndex = list.Count - 1;
+            if (lastIndex == -1) throw new InvalidOperationException("Can't pop on an empty list");
+            T last = list[lastIndex];
+            list.RemoveAt(lastIndex);
+            return last;
+        }
+
+        public static Vector3 GetGroundNormal(this Transform transform, GameObject planet, Vector3 groundDirection, int terrainLayer) {
+            const int nbTangents = 8;
             Vector3[] tangents = new Vector3[nbTangents];
             Vector3 forwardShift = Vector3.Cross(groundDirection, transform.right).normalized;
 
             int k = 0;
-            for (int i = 0; i < nbTangents; i++)
-            {
+            for (int i = 0; i < nbTangents; i++) {
                 float angle = (float)i / nbTangents * 180;
                 float oppositeAngle = angle + 180;
 
@@ -67,12 +62,10 @@ namespace Utils
 
                 Ray rayA = new Ray(originA, groundDirection);
                 RaycastHit hitA;
-                if (Physics.Raycast(rayA, out hitA, Mathf.Infinity, ~terrainLayer))
-                {
+                if (Physics.Raycast(rayA, out hitA, Mathf.Infinity, ~terrainLayer)) {
                     Ray rayB = new Ray(originB, groundDirection);
                     RaycastHit hitB;
-                    if (Physics.Raycast(rayB, out hitB, Mathf.Infinity, ~terrainLayer))
-                    {
+                    if (Physics.Raycast(rayB, out hitB, Mathf.Infinity, ~terrainLayer)) {
                         Vector3 tangent = (hitB.point - hitA.point).normalized;
                         tangents[k] = tangent;
                         k++;
@@ -81,8 +74,7 @@ namespace Utils
             }
 
             Vector3 groundNormal = Vector3.zero;
-            for (int i = 0; i < k / 2; i++)
-            {
+            for (int i = 0; i < k / 2; i++) {
                 Vector3 tangent1 = tangents[i];
                 Vector3 tangent2 = tangents[i + k / 2];
                 Vector3 normal = Vector3.Cross(tangent1, tangent2).normalized;
