@@ -265,8 +265,9 @@ GameObject:
   m_Component:
   - component: {fileID: 9222335403468367760}
   - component: {fileID: 9222335403468367774}
-  - component: {fileID: 4609602959757265791}
   - component: {fileID: 6388512898084512294}
+  - component: {fileID: 4609602959757265791}
+  - component: {fileID: 1549995581823756342}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -307,6 +308,19 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 3
+--- !u!65 &6388512898084512294
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9222335403468367762}
+  m_Material: {fileID: 13400000, guid: 56e5c945542469141b03f88c88174160, type: 2}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 0.7, z: 1.3}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &4609602959757265791
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -328,21 +342,24 @@ MonoBehaviour:
   decelerationTime: 0.4
   delayBeforeStop: 0.35
   planet: {fileID: 0}
-  moveForce: 20
-  torque: 10
   altitude: 2
   hoverForce: 5
   hoverDamp: 0.5
---- !u!65 &6388512898084512294
-BoxCollider:
+  hoverPeriod: 1
+  hoverAmplitude: 2
+  bulletPool: {fileID: 0}
+--- !u!114 &1549995581823756342
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9222335403468367762}
-  m_Material: {fileID: 13400000, guid: 56e5c945542469141b03f88c88174160, type: 2}
-  m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 0.7, z: 1.3}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7748d0fbd5a6194dbea04a40c1292c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  model: {fileID: 0}
+  amount: 0
+  allowGettingUsedWhenNoAvailable: 0

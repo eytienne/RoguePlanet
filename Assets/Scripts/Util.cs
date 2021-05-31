@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -8,6 +9,17 @@ namespace Utils
     {
         public static Vector3[] Vector2sToVector3s(Vector2[] vector2s) {
             return vector2s.Select(v => (Vector3)v).ToArray();
+        }
+    }
+
+    public static class Extensions
+    {
+        public static T Pop<T>(this List<T> list) {
+            int lastIndex = list.Count - 1;
+            if (lastIndex == -1) throw new InvalidOperationException("Can't pop on an empty list");
+            T last = list[lastIndex];
+            list.RemoveAt(lastIndex);
+            return last;
         }
     }
 

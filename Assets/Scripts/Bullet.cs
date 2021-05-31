@@ -13,7 +13,14 @@ public class Bullet : MonoBehaviour
         m_rigidbody = GetComponent<Rigidbody>();
     }
 
-    public void OnCollisionEnter(Collision col) {
+    void OnTriggerEnter(Collider collider) {
+        HitBox hitBox = collider.GetComponent<HitBox>();
+        if (hitBox) {
+            hitBox.Hit();
+        }
+    }
+
+    void OnCollisionEnter(Collision col) {
         Attractor attractor;
         if (col.gameObject.TryGetComponent<Attractor>(out attractor)) {
             gameObject.SetActive(false);

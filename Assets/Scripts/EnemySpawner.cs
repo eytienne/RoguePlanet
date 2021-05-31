@@ -4,26 +4,33 @@ using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    void Update() {
-        if (ActiveEnemies.activeEnemies <= 0) {
-            for (int i = 0; i < ObjectPooler.SharedInstance.amountToPool; i++) {
-                int rand = Random.Range(0, 9);
-                WaveManager(rand);
-                // Debug.Log("spawn enemy nb : " + i);
-            }
+    public int nbToSpawn = 10;
+
+    Pool pool;
+
+    void Awake() {
+        pool = GetComponent<Pool>();
+    }
+
+    void FixedUpdate() {
+        // Debug.Log("pool.inUseCount " + pool.inUseCount);
+        if (pool.inUseCount < 1) {
+            int rand = Random.Range(0, nbToSpawn);
+            // Debug.Log("rand " + rand);
+            WaveManager(0);
         }
     }
 
     void WaveManager(int rand) {
         GameObject[] spawner = GameObject.FindGameObjectsWithTag("Spawner");
-        GameObject enemi = ObjectPooler.SharedInstance.GetPooledObject();
+        GameObject enemy = pool.GetObject();
         Vector3 newPos = spawner[rand].transform.position;
-        newPos.x += ActiveEnemies.activeEnemies * 5;
-        if (enemi != null) {
-            enemi.transform.position = newPos;
-            enemi.transform.rotation = spawner[rand].transform.rotation;
-            enemi.SetActive(true);
-            ActiveEnemies.activeEnemies += 1;
+        newPos.x += pool.inUseCount * 5;
+        // Debug.Log($"enemy {enemy} spawner {spawner.Length} newPos {newPos}");
+        if (enemy != null) {
+            enemy.transform.position = newPos;
+            enemy.transform.rotation = spawner[rand].transform.rotation;
+            enemy.SetActive(true);
         }
     }
 }

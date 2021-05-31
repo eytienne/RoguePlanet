@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6897414036278891253}
   - component: {fileID: 6981289032561886395}
+  - component: {fileID: 7849189965050094130}
   m_Layer: 0
   m_Name: HitBox
   m_TagString: Untagged
@@ -44,6 +45,18 @@ SphereCollider:
   serializedVersion: 2
   m_Radius: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7849189965050094130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1114325588188220077}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdd6579a812cae4f90e9f9195522850, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8295639620188533733
 GameObject:
   m_ObjectHideFlags: 0
@@ -57,16 +70,16 @@ GameObject:
   - component: {fileID: 4999726323301459408}
   - component: {fileID: 4598106751618064772}
   - component: {fileID: -4781470567453922328}
-  - component: {fileID: 3646018750104186745}
   - component: {fileID: 4643991308032957318}
   - component: {fileID: 6566698340752314740}
+  - component: {fileID: 1358706627}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1059074356437855624
 Transform:
   m_ObjectHideFlags: 0
@@ -160,22 +173,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &3646018750104186745
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8295639620188533733}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d736a6e82ebe1e746b7a838832cd6db9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  target: {fileID: 9222335403468367760, guid: 8437b95ab6fee54478d0e312264bf9d2, type: 3}
-  rotationalDamp: 1.25
-  objCollider: {fileID: 8295639620188533733}
-  player: {fileID: 9222335403468367762, guid: 8437b95ab6fee54478d0e312264bf9d2, type: 3}
 --- !u!114 &4643991308032957318
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -189,7 +186,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planet: {fileID: 0}
-  G: 0
+  G: 50
 --- !u!114 &6566698340752314740
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -203,3 +200,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   body: {fileID: 0}
+--- !u!114 &1358706627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8295639620188533733}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d736a6e82ebe1e746b7a838832cd6db9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rotationalDamp: 1.25
+  player: {fileID: 0}

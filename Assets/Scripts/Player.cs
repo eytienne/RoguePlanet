@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Utils;
 
+[RequireComponent(typeof(Pool))]
 public class Player : MonoBehaviour
 {
     public Camera m_camera;
@@ -77,6 +78,8 @@ public class Player : MonoBehaviour
     int terrainLayer;
     float shipRadius;
 
+    public Pool bulletPool;
+
     void Awake() {
         m_rigidbody = GetComponent<Rigidbody>();
         terrainLayer = LayerMask.NameToLayer("Terrain");
@@ -128,8 +131,12 @@ public class Player : MonoBehaviour
 
     void Fire() {
         StartCoroutine(FlashNow());
-        GameObject bullet = BulletsPool.Instance.SpawnFromPool("bullets", transform.position);
+        Debug.Log("bulletPool " + bulletPool);
+        GameObject bullet = bulletPool.GetObject();
+        bullet.transform.position = transform.position;
+        bullet.transform.rotation = Quaternion.identity;
         bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
+        bullet.SetActive(true);
     }
     void OnDrawGizmos() {
         _OnDrawGizmos?.Invoke();
