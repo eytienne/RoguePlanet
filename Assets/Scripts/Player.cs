@@ -66,12 +66,12 @@ public class Player : MonoBehaviour
     // For example, reducing the hover damping will tend to make the object bounce
     // if it passes over an object underneath.
     public float altitude = 2.0f;
-    public float hoverForce = 5.0f;
+    public float hoverForce = 9.0f;
     // The amount that the lifting force is reduced per unit of upward speed.
     // This damping tends to stop the object from bouncing after passing over
     // something.
-    public float hoverDamp = 0.5f;
-    public float hoverPeriod = 1f;
+    public float hoverDamp = 2f;
+    public float hoverPeriod = 0.5f;
     public float hoverAmplitude = 2f;
 
     int terrainLayer;

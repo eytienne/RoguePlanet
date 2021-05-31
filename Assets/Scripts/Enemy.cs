@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    [SerializeField] Transform target;
+    [SerializeField] GameObject target;
     [SerializeField] float rotationalDamp = 1.25f;
 
     private float movementSpeed = 2f;
@@ -19,7 +19,7 @@ public class Enemy : MonoBehaviour
 
     public bool Die()
     {
-        audioData.Play();
+        AudioSource.PlayClipAtPoint(audioData.clip, transform.position);
         this.getCollider().SetActive(false);
         Debug.Log("Ennemi détruit");
         return true;
@@ -45,18 +45,21 @@ public class Enemy : MonoBehaviour
 
     public void Turn()
     {
-        Vector3 pos = target.position - transform.position;
+        Vector3 pos = target.transform.position - transform.position;
         Quaternion rot = Quaternion.LookRotation(pos);
         transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * rotationalDamp);
     }
 
     public void Move()
     {
-        transform.LookAt(target);
+        transform.LookAt(target.transform.position);
+        transform.position += transform.forward * 15 * Time.deltaTime;
+        //Debug.Log(target.transform.position);
     }
 
     void Start()
     {
+        target = GameObject.Find("Player");
         audioData = GetComponent<AudioSource>();
         rb = this.GetComponent<Rigidbody>();
     }
@@ -64,5 +67,6 @@ public class Enemy : MonoBehaviour
     void FixedUpdate()
     {
         Move();
+        Debug.DrawRay(transform.position, this.transform.forward, Color.green);
     }
 }
