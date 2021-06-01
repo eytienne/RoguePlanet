@@ -264,7 +264,7 @@ public class Player : MonoBehaviour
             if (life > 0.01) {
                 life -= 0.1f;                //affichage d'une barre bomportaznt les trois images de vaisseau et qui décroit en fonction des dégâts pris
                 //bruit de dégats
-                Debug.Log(life);
+                //Debug.Log(life);
             }
             if (life == 0.10) {
                 life -= 0.1f;
