@@ -17,7 +17,7 @@ MonoBehaviour:
     enabled: 1
     useFirstLayerAsMask: 1
     simplexNoiseSettings:
-      minValue: 0.9
+      minValue: 0.98
       strength: 0.25
       nbOctaves: 4
       baseRoughness: 1
@@ -37,7 +37,7 @@ MonoBehaviour:
     enabled: 1
     useFirstLayerAsMask: 1
     simplexNoiseSettings:
-      minValue: 1
+      minValue: 0.85
       strength: 0.5
       nbOctaves: 4
       baseRoughness: 1
@@ -45,8 +45,8 @@ MonoBehaviour:
       persistence: 0.5
       centre: {x: 0, y: 0, z: 0}
     rigidNoiseSettings:
-      minValue: 0.1
-      strength: 0.2
+      minValue: 0.15
+      strength: 0.3
       nbOctaves: 4
       baseRoughness: 5
       roughness: 3
@@ -55,7 +55,7 @@ MonoBehaviour:
       weightMultiplier: 0.5
   - type: 0
     enabled: 1
-    useFirstLayerAsMask: 0
+    useFirstLayerAsMask: 1
     simplexNoiseSettings:
       minValue: 0.5
       strength: 0.03

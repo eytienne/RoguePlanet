@@ -4,7 +4,7 @@
 public class Attractor : MonoBehaviour
 {
     Rigidbody body;
-    public float G = 0.1f;
+    const float G = 0.1f;
     public float nearMass {
         get {
             Vector3 scale = transform.lossyScale;

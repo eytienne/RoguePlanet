@@ -9,17 +9,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Utils;
 
 public class Player : MonoBehaviour
 {
     public Camera m_camera;
+    public Camera Camera {
+        get {
+            return m_camera;
+        }
+    }
 
     public Light flash;
     public float flashTotalSeconds;
     public float flashMaxIntensity;
 
     Rigidbody m_rigidbody;
+    readonly Quaternion cameraOrientation = Quaternion.Euler(90, 0, 0);
 
     public float moveSpeed = 10;
     public float accelerationTime = 0.5f;
@@ -42,50 +47,15 @@ public class Player : MonoBehaviour
 
     FixedQueue<_CallbackContext> lastMoves = new FixedQueue<_CallbackContext>(lastMovesLimit);
 
-    static readonly Vector3[] speedCurve = Util.Vector2sToVector3s(new Vector2[] {
+    static readonly Vector3[] ease = Util.Vector2sToVector3s(new Vector2[] {
        new Vector2(0 , 0),
        new Vector2(0.5f , 0),
        new Vector2(0.5f , 1),
        new Vector2(1 , 1),
     });
 
-    static readonly Func<float, Vector3> hoverSinusoidal = Tooling.SinusoidalFromBezierCubic01(Util.Vector2sToVector3s(new Vector2[] {
-       new Vector2(0 , 0),
-       new Vector2(0.7f , 0),
-       new Vector2(0.3f , 1),
-       new Vector2(1 , 1),
-    }));
-
-    public GameObject planet;
-
-    // It moves/levitates by measuring the distance to ground with a
-    // raycast then applying a force that decreases as the object
-    // reaches the desired levitation height.
-
-    // Vary the parameters below to get different control effects.
-    // For example, reducing the hover damping will tend to make the object bounce
-    // if it passes over an object underneath.
-    public float altitude = 2.0f;
-    public float hoverForce = 5.0f;
-    // The amount that the lifting force is reduced per unit of upward speed.
-    // This damping tends to stop the object from bouncing after passing over
-    // something.
-    public float hoverDamp = 0.5f;
-    public float hoverPeriod = 1f;
-    public float hoverAmplitude = 2f;
-
-    int terrainLayer;
-    float shipRadius;
-
     void Awake() {
         m_rigidbody = GetComponent<Rigidbody>();
-        terrainLayer = LayerMask.NameToLayer("Terrain");
-        shipRadius = transform.lossyScale.z;
-    }
-
-    void Start() {
-        m_rigidbody.drag = 0.5f;
-        m_rigidbody.angularDrag = 0.5f;
     }
 
     // void Start() {
@@ -115,7 +85,6 @@ public class Player : MonoBehaviour
         inputActions = new PlayerControls();
         inputActions.Enable();
         inputActions.Player.Move.performed += Move;
-        inputActions.Player.Fire.performed += _ => Fire();
     }
 
     void OnDisable() {
@@ -126,125 +95,28 @@ public class Player : MonoBehaviour
         lastMoves.Enqueue(new _CallbackContext(context));
     }
 
-    void Fire() {
-        StartCoroutine(FlashNow());
-        Debug.Log("feu");
-        GameObject bullet = BulletsPool.Instance.SpawnFromPool("bullets", transform.position);
-        bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
-    }
-    void OnDrawGizmos() {
-        _OnDrawGizmos?.Invoke();
-    }
-    event Action _OnDrawGizmos;
+    Vector2? prevMousePosition = null;
 
-    void LateUpdate() {
-        Transform ctransform = m_camera.transform;
-
-        // Quaternion orientation = Quaternion.LookRotation(gravity, -gravity);
-        // ctransform.rotation = orientation;
-        ctransform.LookAt(transform, ctransform.up);
-    }
-
-    Quaternion _rotateToGround;
-    void FixedUpdate() {
-        _OnDrawGizmos = null;
-        Vector3 gravity = (planet.transform.position - transform.position).normalized;
-        Vector3 groundDirection = gravity; // TODO shift it with velocity
-
-        Ray groundRay = new Ray(transform.position, groundDirection);
-        RaycastHit groundHit;
-        if (Physics.Raycast(groundRay, out groundHit, Mathf.Infinity, ~terrainLayer)) {
-            float hoverDelta = altitude - groundHit.distance;
-            Vector3 velocity = m_rigidbody.velocity;
-            float upwardSpeed = (transform.worldToLocalMatrix * velocity).y;
-            float lift = hoverDelta * Mathf.Pow(hoverForce, 2);
-            lift += (1 * Mathf.Sign(hoverDelta)) * hoverAmplitude * hoverSinusoidal((Time.fixedTime % hoverPeriod) / hoverPeriod).y / lift;
-            Debug.Log($"lift {lift} velocity.y {velocity.y} upwardSpeed {upwardSpeed}");
-            m_rigidbody.AddForce(lift * -groundDirection, ForceMode.Acceleration);
-        }
-
-        Vector3 transformUp = transform.up;
-        Vector3 forwardShift = Vector3.Cross(groundDirection, transform.right).normalized;
-        // Debug.Log("dot gravity transformDown" + Vector3.Dot(gravity, transformUp));
-        // Debug.DrawRay(transform.position, transform.forward, Color.red);
-        // Debug.DrawRay(transform.position, forwardShift, Color.green);
-        forwardShift *= Mathf.Sign(Vector3.Dot(transform.forward, forwardShift)) * shipRadius;
-
-        const int nbTangents = 8;
-        Vector3[] tangents = new Vector3[nbTangents];
-        int k = 0;
-        for (int i = 0; i < nbTangents; i++) {
-            float angle = (float)i / nbTangents * 180;
-            float oppositeAngle = angle + 180;
-
-            Vector3 originA = transform.position + Quaternion.AngleAxis(angle, -groundDirection) * forwardShift;
-            Vector3 originB = transform.position + Quaternion.AngleAxis(oppositeAngle, -groundDirection) * forwardShift;
-            // Debug.DrawRay(originA, groundDirection, Color.cyan);
-            // Debug.DrawRay(originB, groundDirection, Color.blue);
-
-            Ray rayA = new Ray(originA, groundDirection);
-            RaycastHit hitA;
-            if (Physics.Raycast(rayA, out hitA, Mathf.Infinity, ~terrainLayer)) {
-                Ray rayB = new Ray(originB, groundDirection);
-                RaycastHit hitB;
-                if (Physics.Raycast(rayB, out hitB, Mathf.Infinity, ~terrainLayer)) {
-                    Vector3 tangent = (hitB.point - hitA.point).normalized;
-                    tangents[k] = tangent;
-                    k++;
-                }
-            }
-        }
-
-        Plane gravityPlane = new Plane(-gravity, transform.position);
-        Vector3 groundNormal = Vector3.zero;
-        for (int i = 0; i < k / 2; i++) {
-            Vector3 tangent1 = tangents[i];
-            Vector3 tangent2 = tangents[i + k / 2];
-            Vector3 normal = Vector3.Cross(tangent1, tangent2).normalized;
-            normal *= Mathf.Sign(Vector3.Dot(transformUp, normal));
-
-            // Debug.DrawRay(transform.position, normal.normalized, Color.red);
-            groundNormal = Vector3.LerpUnclamped(groundNormal, normal, (float)(k == 0 ? 1 : k) / (k + 1));
-        }
-        Quaternion rotateToGround = Quaternion.FromToRotation(transform.up, groundNormal);
-        rotateToGround = _rotateToGround = Quaternion.SlerpUnclamped(_rotateToGround, rotateToGround, 30 * Time.fixedDeltaTime);
-        // Debug.Log("groundNormal " + groundNormal + " magnitude " + groundNormal.magnitude + " rotateToGround " + rotateToGround);
-
-        Vector3 _mouseDirection = Vector3.zero;
+    void Update() {
+        Resolution resolution = Screen.currentResolution;
+        // - 0.5f * new Vector2(resolution.height, resolution.width)
         Vector2 mousePosition = Mouse.current.position.ReadValue();
-        Ray mouseRay = m_camera.ScreenPointToRay(mousePosition);
+        mousePosition -= prevMousePosition ?? mousePosition;
+        prevMousePosition = mousePosition;
+        mousePosition.Normalize();
+        // Debug.Log("mousePos " + mousePosition);
+        Vector3 position = new Vector3(mousePosition.x, transform.position.y, mousePosition.y);
+        m_camera.transform.SetPositionAndRotation(transform.position + 25 * transform.up, transform.rotation * cameraOrientation);
+        // transform.LookAt(transform.TransformDirection(position), transform.up);
+        /*if (Input.GetButton("Fire1"))
+        {
+            StartCoroutine("flashNow");
+            Debug.Log("feu");
+            //Bullets.Instance.SpawnFromPool("Cube", transform.position, Quaternion.identity);
+        }*/
+    }
 
-        // Debug.Log("dot gravity groundNormal: " + Vector3.Dot(gravity, groundNormal));
-        float enter;
-        if (gravityPlane.Raycast(mouseRay, out enter)) {
-            Vector3 hitPoint = mouseRay.GetPoint(enter);
-            _mouseDirection = (hitPoint - transform.position).normalized;
-
-            _OnDrawGizmos += () => {
-                // Gizmos.DrawSphere(hitPoint, 0.1f);
-                // Gizmos.color = Color.cyan;
-                // CGizmos.DrawPlane(gravityPlane, transform.position, 0.25f * Vector3.one);
-            };
-        }
-
-        Plane normalPlane = new Plane(groundNormal, transform.position);
-        Vector3 mouseDirection = Vector3.ProjectOnPlane(_mouseDirection, groundNormal).normalized;
-        _OnDrawGizmos += () => {
-            // Gizmos.color = Color.magenta;
-            // CGizmos.DrawPlane(normalPlane, transform.position, 0.25f * Vector3.one);
-            // Gizmos.color = Color.black;
-            // Gizmos.DrawRay(transform.position, _mouseDirection);
-            // Gizmos.color = Color.yellow;
-            // Gizmos.DrawRay(transform.position, mouseDirection);
-        };
-        Quaternion rotateToMouseDirection = Quaternion.FromToRotation(transform.forward, mouseDirection);
-
-        m_rigidbody.MoveRotation(
-            rotateToMouseDirection *
-            rotateToGround *
-            m_rigidbody.rotation
-            );
-
+    void FixedUpdate() {
         float t = 0;
         var ctx2 = lastMoves.Get(2);
         var ctx1 = lastMoves.Get(1);
@@ -259,7 +131,7 @@ public class Player : MonoBehaviour
         } else { // only direction change
             t = 1;
         }
-        float kvelocity = Tooling.GetBezierCubicPoint(Mathf.Clamp01(t), speedCurve).y;
+        float kvelocity = Tooling.GetBezierCubicPoint(Mathf.Clamp01(t), ease).y;
         if (move0.magnitude == 0) {
             kvelocity = 1 - kvelocity;
         }
@@ -267,27 +139,16 @@ public class Player : MonoBehaviour
         bool same = ctx0.Equals(ctx2);
 
         // choose the move direction from the last move or not
-        Vector2 _moveDirection = move0.magnitude == 0
+        Vector2 moveDirection = move0.magnitude == 0
             ? move1 // deceleration
             : move0 // acceleration
         ;
-        _moveDirection.Normalize();
-        Resolution resolution = Screen.currentResolution;
-        Ray forwardRay = m_camera.ScreenPointToRay(new Vector2(resolution.width / 2, resolution.height));
 
-        if (gravityPlane.Raycast(forwardRay, out enter)) {
-            Vector3 hitPoint = forwardRay.GetPoint(enter);
-            Vector3 mouseForward = (hitPoint - transform.position).normalized;
-
-            Vector3 moveDirection = Quaternion.FromToRotation(transform.forward, mouseForward) * transform.TransformDirection(_moveDirection.x, 0, _moveDirection.y);
-
-            const float C = 100;
-            m_rigidbody.velocity = C * moveDirection * kvelocity * moveSpeed * Time.deltaTime;
-        }
-        m_camera.transform.position = transform.position + 25 * -gravity;
+        m_rigidbody.MovePosition(m_rigidbody.position
+            + transform.TransformDirection(moveDirection.x, 0, moveDirection.y) * kvelocity * moveSpeed * Time.deltaTime);
     }
 
-    IEnumerator FlashNow() {
+    IEnumerator flashNow() {
         float waitTime = flashTotalSeconds / 2;
         // Get half of the seconds (One half to get brighter and one to get darker)
         while (flash.intensity < flashMaxIntensity) {

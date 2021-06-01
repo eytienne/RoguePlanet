@@ -10,6 +10,11 @@ public class Planet : MonoBehaviour
     [Range(0.001f, 1)]
     public float colliderPrecision = 0.33f;
 
+    public MinMax elevationMinMax;
+    public ColourSettings coloursSettings;
+    ColourGenerator colourGenerator = new ColourGenerator();
+    SimplexNoise simplexNoise;
+
     // currently only avoid collider rendering
     public bool designMode = false;
 
@@ -61,6 +66,8 @@ public class Planet : MonoBehaviour
         meshRenderer = GetComponent<MeshRenderer>();
         if (!shape) shape = new ShapeSettings();
         terrainLayer = LayerMask.NameToLayer("Terrain");
+        colourGenerator.UpdateSettings(coloursSettings);
+        colourGenerator.UpdateColours();
     }
 
     public void Start() {
@@ -68,6 +75,9 @@ public class Planet : MonoBehaviour
     }
 
     public void Initialize() {
+        colourGenerator.UpdateSettings(coloursSettings);
+        elevationMinMax = new MinMax();
+
         if(faces.Length != 6) faces = new Face[6];
         for (int i = 0; i < 6; i++) {
             if (faces[i] == null) {
@@ -80,14 +90,14 @@ public class Planet : MonoBehaviour
             ;
             Face face = faces[i];
             face.gameObject.layer = terrainLayer;
-            face.meshRenderer.sharedMaterial = meshRenderer.material;
+            face.GetComponent<MeshRenderer>().sharedMaterial = coloursSettings.planetMaterial;
         }
     }
 
     public void OnInspectorUpdate() {
-        Debug.Log("OnInspectorUpdate");
         Initialize();
         SetupMesh();
+        colourGenerator.UpdateColours();
     }
 
     void SetupMesh() {
@@ -96,6 +106,8 @@ public class Planet : MonoBehaviour
             bool renderIt = toRender.HasFlag((Faces)(1 << i));
             face.meshFilter.sharedMesh = renderIt ? GenerateFaceMesh(directions[i], nbSegments) : null;
             face.meshCollider.sharedMesh = renderIt && !designMode ? GenerateFaceMesh(directions[i], Mathf.CeilToInt(colliderPrecision * nbSegments)) : null;
+            face.GetComponent<MeshRenderer>().sharedMaterial = coloursSettings.planetMaterial;
+            colourGenerator.UpdateElevation(elevationMinMax);
         }
     }
 
@@ -113,9 +125,11 @@ public class Planet : MonoBehaviour
                 Vector2 percent = new Vector2(x, y) / (nbSegments - 1);
                 Vector3 pointOnUnitCube = dir + (percent.x - .5f) * 2 * axisA + (percent.y - .5f) * 2 * axisB;
                 Vector3 even = EvenSpherePoint(pointOnUnitCube);
-                even *= 1 + CalculateElevation(even);
+                float elevation = CalculateElevation(even);
+                elevationMinMax.AddValue(1 + elevation);
+                even *= 1 + elevation;
                 vertices[i] = even;
-
+                
                 if (x != nbSegments - 1 && y != nbSegments - 1) {
                     triangles[triIndex] = i;
                     triangles[triIndex + 1] = i + nbSegments + 1;
@@ -171,5 +185,4 @@ public class Planet : MonoBehaviour
         }
         return elevation;
     }
-
 }

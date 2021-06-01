@@ -17,6 +17,7 @@ filters = {
 }
 scopes = {
 	"last_search.AB59B443" = "version control"
+	"last_search.00000000" = "w"
 }
 providers = {
 	asset = {

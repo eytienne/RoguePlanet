@@ -36,14 +36,14 @@ public class SimplexNoise : INoise
         float elevation = 0;
         float frequency = settings.baseRoughness;
         float amplitude = 1;
-
+        
         for (int i = 0; i < settings.nbOctaves; i++) {
             float v = simplex.Evaluate(point * frequency + settings.centre);
             elevation += (v + 1) * .5f * amplitude;
             frequency *= settings.roughness;
             amplitude *= settings.persistence;
         }
-
+        
         elevation = Mathf.Max(0, elevation - settings.minValue);
         return elevation * settings.strength;
     }

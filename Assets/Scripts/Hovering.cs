@@ -4,8 +4,7 @@ using System;
 public class Hovering : MonoBehaviour
 {
     // planet along which is oriented the object
-    private GameObject planet;
-    private GameObject attractor;
+    public GameObject planet;
 
     // It moves/levitates by measuring the distance to ground with a
     // raycast then applying a force that decreases as the object
@@ -29,10 +28,8 @@ public class Hovering : MonoBehaviour
 
     void Awake() {
         m_rigidbody = GetComponent<Rigidbody>();
-        terrainLayer = LayerMask.NameToLayer("Attractor");
+        terrainLayer = LayerMask.NameToLayer("Terrain");
         shipRadius = 4f * transform.lossyScale.z;
-        planet = GameObject.Find("Planet");
-        attractor = planet.transform.Find("attractor").gameObject;
     }
 
     void Start() {
@@ -47,7 +44,7 @@ public class Hovering : MonoBehaviour
 
     void FixedUpdate() {
         _OnDrawGizmos = null;
-        Vector3 groundDirection = (attractor.transform.position - transform.position).normalized;
+        Vector3 groundDirection = (planet.transform.position - transform.position).normalized;
 
         Ray groundRay = new Ray(transform.position, groundDirection);
         RaycastHit groundHit;

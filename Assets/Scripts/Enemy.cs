@@ -4,54 +4,36 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    [SerializeField] Transform target;
-    [SerializeField] float rotationalDamp = 1.25f;
-
-    private float movementSpeed = 2f;
+    private float movementSpeed = 10.0f;
     public GameObject objCollider;
     public GameObject player;
     private Rigidbody rb;
+    private Vector2 movement;
 
     public GameObject getCollider()
     {
         return this.objCollider;
     }
 
-    public bool Die()
+    public bool death()
     {
         this.getCollider().SetActive(false);
         Debug.Log("Ennemi détruit");
         return true;
     }
 
+    public void seekPlayer(Vector3 direction)
+    {
+        rb.MovePosition(transform.position + (direction * movementSpeed * Time.deltaTime));
+    }
     public void OnCollisionEnter(Collision col)
     {
         if (col.gameObject.tag == "Bullet")
         {
-            col.gameObject.SetActive(false);
-            Die();
+            //col.gameObject.SetActive(false);
+            this.death();
             ActiveEnemies.activeEnemies--;
         }
-
-        if (col.gameObject.tag == "Planet")
-        {
-            getCollider().SetActive(false);
-            Die();
-            Debug.Log("touché planette enemy");
-            ActiveEnemies.activeEnemies--;
-        }
-    }
-
-    public void Turn()
-    {
-        Vector3 pos = target.position - transform.position;
-        Quaternion rot = Quaternion.LookRotation(pos);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * rotationalDamp);
-    }
-
-    public void Move()
-    {
-        transform.LookAt(target);
     }
 
     void Start()
@@ -59,8 +41,15 @@ public class Enemy : MonoBehaviour
         rb = this.GetComponent<Rigidbody>();
     }
 
-    void FixedUpdate()
+    void Update()
     {
-        Move();
+        Vector3 direction = player.transform.position - transform.position;
+        direction.Normalize();
+        movement = direction;
+    }
+
+    private void FixedUpdate()
+    {
+        seekPlayer(movement);
     }
 }
