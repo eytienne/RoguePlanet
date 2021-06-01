@@ -25,20 +25,16 @@ public class Bullet : MonoBehaviour
         Attractor attractor;
         if (col.gameObject.TryGetComponent<Attractor>(out attractor)) {
             gameObject.SetActive(false);
-            Debug.Log("touche planete");
         }
     }
 
     void FixedUpdate() {
-        Debug.Log(Time.time - time);
         if (Time.time - time > 2) {
             gameObject.SetActive(false);
-            Debug.Log("Trop long");
         }
     }
 
-    public void setTime(double t)
-    {
+    public void setTime(double t) {
         this.time = t;
     }
 

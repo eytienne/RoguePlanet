@@ -10,15 +10,15 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utils;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Pool))]
 public class Player : MonoBehaviour
 {
     public Camera m_camera;
-
+    AudioSource audioData;
     public Light flash;
-    public float flashTotalSeconds;
-    public float flashMaxIntensity;
+    public float fireRate;
 
     Rigidbody m_rigidbody;
 
@@ -27,9 +27,13 @@ public class Player : MonoBehaviour
     public float decelerationTime = 0.4f;
     public float delayBeforeStop = 0.35f;
     PlayerControls inputActions;
-    const int lastMovesLimit = 3;
 
+    const int lastMovesLimit = 3;
+    private float life = 1;
+    public Slider slider;
     // struct to persist the data of the Input System context getters which only return global current values
+    public PauseMenu pauseMenu;
+
     struct _CallbackContext
     {
         public double time;
@@ -67,12 +71,12 @@ public class Player : MonoBehaviour
     // For example, reducing the hover damping will tend to make the object bounce
     // if it passes over an object underneath.
     public float altitude = 2.0f;
-    public float hoverForce = 5.0f;
+    public float hoverForce = 9.0f;
     // The amount that the lifting force is reduced per unit of upward speed.
     // This damping tends to stop the object from bouncing after passing over
     // something.
-    public float hoverDamp = 0.5f;
-    public float hoverPeriod = 1f;
+    public float hoverDamp = 2f;
+    public float hoverPeriod = 0.5f;
     public float hoverAmplitude = 2f;
 
     int terrainLayer;
@@ -87,6 +91,8 @@ public class Player : MonoBehaviour
     }
 
     void Start() {
+        slider.value = 1;
+        audioData = GetComponent<AudioSource>();
         m_rigidbody.drag = 0.5f;
         m_rigidbody.angularDrag = 0.5f;
     }
@@ -118,27 +124,15 @@ public class Player : MonoBehaviour
         inputActions = new PlayerControls();
         inputActions.Enable();
         inputActions.Player.Move.performed += Move;
-        inputActions.Player.Fire.performed += _ => Fire();
+        inputActions.Player.Fire.started += Fire;
+        inputActions.Player.Fire.canceled += StopFire;
+        inputActions.Player.Pause.performed += _ => pauseMenu.Pause();
     }
 
     void OnDisable() {
         inputActions.Disable();
     }
 
-    void Move(InputAction.CallbackContext context) {
-        lastMoves.Enqueue(new _CallbackContext(context));
-    }
-
-    void Fire() {
-        StartCoroutine(FlashNow());
-        Debug.Log("bulletPool " + bulletPool);
-        GameObject bullet = bulletPool.GetObject();
-        bullet.transform.position = transform.position;
-        bullet.transform.rotation = Quaternion.identity;
-        bullet.GetComponent<Bullet>().setTime(Time.time);
-        bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
-        bullet.SetActive(true);
-    }
     void OnDrawGizmos() {
         _OnDrawGizmos?.Invoke();
     }
@@ -262,21 +256,65 @@ public class Player : MonoBehaviour
         m_camera.transform.position = transform.position + 25 * -gravity;
     }
 
+    void OnCollisionEnter(Collision col) {
+
+        if (col.gameObject.tag == "Enemy") {
+            //GameObject imageObject = GameObject.FindGameObjectWithTag("life" + lives);
+            //imageObject.SetActive(false);
+            if (life > 0.01) {
+                life -= 0.1f;                //affichage d'une barre bomportaznt les trois images de vaisseau et qui décroit en fonction des dégâts pris
+                //bruit de dégats
+                Debug.Log(life);
+            }
+            if (life == 0.10) {
+                life -= 0.1f;
+                //bruit de destruction
+                //gameover
+            }
+            slider.value = life;
+        }
+    }
+
+    void Move(InputAction.CallbackContext context) {
+        lastMoves.Enqueue(new _CallbackContext(context));
+    }
+
+    Coroutine CoroutineFire;
+    Coroutine CoroutineFlash;
+
+    void Fire(InputAction.CallbackContext context) {
+        CoroutineFlash = StartCoroutine(FlashNow());
+        CoroutineFire = StartCoroutine(ShotNow());
+    }
+
+    void StopFire(InputAction.CallbackContext context) {
+        StopCoroutine(CoroutineFire);
+        StopCoroutine(CoroutineFlash);
+        flash.intensity = 0;
+    }
+
     IEnumerator FlashNow() {
-        float waitTime = flashTotalSeconds / 2;
-        // Get half of the seconds (One half to get brighter and one to get darker)
-        while (flash.intensity < flashMaxIntensity) {
-            flash.intensity += Time.deltaTime / waitTime;
-            yield return null;
-        }
-        while (flash.intensity > 0) {
-            flash.intensity -= Time.deltaTime / waitTime;
-            yield return null;
-        }
-        if (flash.intensity != 0) {
+        float waitTime = fireRate / 2;
+        // Get half of the seconds (One half to get brighter and one to get darker
+        while (true) {
+            flash.intensity = 1;
+            yield return new WaitForSeconds(waitTime);
             flash.intensity = 0;
-        };
-        yield return null;
+            yield return new WaitForSeconds(waitTime);
+        }
+    }
+
+    IEnumerator ShotNow() {
+        while (true) {
+            GameObject bullet = bulletPool.GetObject();
+            bullet.transform.position = transform.position;
+            bullet.transform.rotation = Quaternion.identity;
+            bullet.GetComponent<Bullet>().setTime(Time.time);
+            bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
+            bullet.SetActive(true);
+            audioData.Play();
+            yield return new WaitForSeconds(fireRate);
+        }
     }
 
 }

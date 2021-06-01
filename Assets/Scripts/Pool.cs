@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Utils;
 
@@ -19,13 +20,14 @@ public class NoAvailableObjectException : Exception
     public NoAvailableObjectException() { }
 }
 
-public class Pool : MonoBehaviour
+public class Pool : MonoBehaviour, ISerializationCallbackReceiver
 {
     public GameObject model;
     public int amount;
     public bool allowGettingUsedWhenNoAvailable = false;
 
-    LinkedList<Pooled> inUse = new LinkedList<Pooled>();
+    List<Pooled> _inUse;
+    LinkedList<Pooled> inUse;
     List<Pooled> available;
 
     public int availableCount {
@@ -42,6 +44,18 @@ public class Pool : MonoBehaviour
     bool _isGameObject;
     public Pool() {
         available = new List<Pooled>(amount);
+    }
+
+    public void OnBeforeSerialize() {
+        _inUse = inUse.ToList();
+    }
+
+    public void OnAfterDeserialize() {
+        if (_inUse != null) {
+            inUse = new LinkedList<Pooled>(_inUse);
+        } else {
+            inUse = new LinkedList<Pooled>();
+        }
     }
 
     void Awake() {
