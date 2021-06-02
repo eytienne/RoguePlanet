@@ -17,7 +17,7 @@ MonoBehaviour:
     enabled: 1
     useFirstLayerAsMask: 1
     simplexNoiseSettings:
-      minValue: 0.9
+      minValue: 0.89
       strength: 0.25
       nbOctaves: 4
       baseRoughness: 1

@@ -9,6 +9,7 @@ TagManager:
   - Attractor
   - Bullet
   - Enemy
+  - EnemyBullet
   layers:
   - Default
   - TransparentFX

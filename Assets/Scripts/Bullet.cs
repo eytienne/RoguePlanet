@@ -5,19 +5,15 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class Bullet : MonoBehaviour
 {
-    public GameObject player;
+    public GameObject shooter;
     private double time;
-
-    Rigidbody m_rigidbody;
-
-    void Awake() {
-        m_rigidbody = GetComponent<Rigidbody>();
-    }
 
     void OnTriggerEnter(Collider collider) {
         HitBox hitBox = collider.GetComponent<HitBox>();
+        if (shooter.tag == "Enemy") return;
         if (hitBox) {
             hitBox.Hit();
+            gameObject.SetActive(false);
         }
     }
 
