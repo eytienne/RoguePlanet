@@ -283,8 +283,10 @@ public class Player : MonoBehaviour
     Coroutine CoroutineFlash;
 
     void Fire(InputAction.CallbackContext context) {
+        if (Time.timeScale != 0) { 
         CoroutineFlash = StartCoroutine(FlashNow());
         CoroutineFire = StartCoroutine(ShotNow());
+        }
     }
 
     void StopFire(InputAction.CallbackContext context) {
