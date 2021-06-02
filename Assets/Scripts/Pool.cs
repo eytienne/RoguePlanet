@@ -26,8 +26,10 @@ public class Pool : MonoBehaviour, ISerializationCallbackReceiver
     public int amount;
     public bool allowGettingUsedWhenNoAvailable = false;
 
+    [SerializeField]
     List<Pooled> _inUse;
     LinkedList<Pooled> inUse;
+    [SerializeField]
     List<Pooled> available;
 
     public int availableCount {

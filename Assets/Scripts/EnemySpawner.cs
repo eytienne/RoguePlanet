@@ -29,7 +29,7 @@ public class EnemySpawner : MonoBehaviour
         bool rand = Random.Range(0f, 1f) > 0.5f;
         if(rand)
         {
-            enemy.GetComponent<Enemy>().setShootingAbility(true);
+            enemy.GetComponent<Enemy>().SetShootingAbility(true);
         }
         if (enemy != null) {
             Vector3 newPos = spawners[spawnerIndex].transform.position;

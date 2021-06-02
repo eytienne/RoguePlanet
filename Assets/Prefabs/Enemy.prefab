@@ -318,6 +318,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7748d0fbd5a6194dbea04a40c1292c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  model: {fileID: 7372957514328710229, guid: 11ddad26ad8cb9c4a91303b2731324bc, type: 3}
+  model: {fileID: 0}
   amount: 10
   allowGettingUsedWhenNoAvailable: 1

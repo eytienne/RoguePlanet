@@ -4,7 +4,6 @@ using UnityEditor;
 [CustomEditor(typeof(Planet))]
 public class PlanetEditor : Editor
 {
-
     Planet planet;
     Editor shapeEditor;
 

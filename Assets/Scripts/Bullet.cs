@@ -26,8 +26,8 @@ public class Bullet : MonoBehaviour
     }
 
     void OnTriggerEnter(Collider collider) {
+        if (shooter.tag == collider.tag) return;
         HitBox hitBox = collider.GetComponent<HitBox>();
-        if (shooter.tag == "Enemy") return;
         if (hitBox) {
             hitBox.Hit();
             gameObject.SetActive(false);
@@ -39,10 +39,9 @@ public class Bullet : MonoBehaviour
             gameObject.SetActive(false);
             return;
         }
-        Debug.Log(planet);
         Vector3 groundNormal = transform.GetGroundNormal(planet, planet.transform.position - transform.position, terrainLayer);
         shotDirection = Vector3.ProjectOnPlane(shotDirection, groundNormal).normalized;
-        Debug.DrawRay(transform.position, shotDirection, Color.red);
+        // Debug.DrawRay(transform.position, shotDirection, Color.red);
         m_rigidbody.velocity = 20 * shotDirection;
     }
 

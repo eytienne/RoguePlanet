@@ -50,24 +50,19 @@ public class Enemy : MonoBehaviour
     Coroutine CoroutineFire;
     void FixedUpdate() {
         float dist = Vector3.Distance(transform.position, player.transform.position);
-        Debug.Log(shooterEnemy);
-        /*if (dist <= 50)
-        {
+        if (dist <= 50) {
             Move();
-            if (dist <= 30 && isShooting == false && shooterEnemy == true)
-            {
+            if (dist <= 30 && isShooting == false && shooterEnemy == true) {
                 CoroutineFire = Shoot();
-                Debug.Log("Dans la zone, dist : " + dist);
-            }
-            else if (dist > 30 && isShooting == true)
-            {
+                // Debug.Log("Dans la zone, dist : " + dist);
+            } else if (dist > 30 && isShooting == true) {
                 isShooting = false;
-                Debug.Log("hors de la zone, dist : " + dist);
+                // Debug.Log("hors de la zone, dist : " + dist);
                 StopCoroutine(CoroutineFire);
             }
-        }*/
-        //else if(Time.time - time > 2)
+        } else if (Time.time - time > 2) {
             Roam();
+        }
     }
 
     void Die() {
@@ -105,7 +100,7 @@ public class Enemy : MonoBehaviour
 
     void IsInRange() {
         //se déplace vers le joueur car il est en ligne de vue
-        
+
     }
 
     void Move() {
@@ -113,15 +108,12 @@ public class Enemy : MonoBehaviour
         transform.GetComponent<Rigidbody>().velocity = transform.forward * moveSpeed;
     }
 
-    public void setShootingAbility(bool b)
-    {
+    public void SetShootingAbility(bool b) {
         this.shooterEnemy = b;
     }
 
-    IEnumerator ShotNow()
-    {
-        while (true)
-        {
+    IEnumerator ShotNow() {
+        while (true) {
 
             GameObject bullet = bulletPool.GetObject();
             bullet.transform.position = transform.position;
