@@ -5,24 +5,47 @@ using UnityEngine.InputSystem;
 
 public class PauseMenu : MonoBehaviour
 {
-    public GameObject Canvas;
-    float currentTimeScale;
+    public Player player;
+    public GameObject PauseCanvas;
+    public GameObject OptionsCanvas;
+    bool Paused = false;
 
-    public void Pause() {
-        Debug.Log("Pause()");
-        if (Time.timeScale == 0f) {
-            Canvas.SetActive(false);
-            Time.timeScale = currentTimeScale;
-            Debug.Log("desactiver");
-        } else {
-            Canvas.SetActive(true);
-            currentTimeScale = Time.timeScale;
-            Time.timeScale = 0f;
-            Debug.Log("activer");
-        }
+    public void Pause()
+    {
+        if (OptionsCanvas.activeSelf == false)
+        {
+            if (Paused)
+            {
+                PauseCanvas.SetActive(false);
+                Time.timeScale = 1f;
+                Debug.Log("desactiver");
+                Paused = false;
+            }
+            else
+            {
+                PauseCanvas.SetActive(true);
+                Time.timeScale = 0f;
+                Debug.Log("activer");
+                Paused = true;
+            }
+        }      
     }
-
-    public void Quitter() {
+    public void Quitter()
+    {
         Application.Quit();
+    }
+    public void Options()
+    {
+        if (PauseCanvas.activeSelf)
+        {
+            PauseCanvas.SetActive(false);
+            OptionsCanvas.SetActive(true);
+        }
+        else
+        {
+            PauseCanvas.SetActive(true);
+            OptionsCanvas.SetActive(false);
+        }
+
     }
 }

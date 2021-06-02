@@ -264,7 +264,7 @@ public class Player : MonoBehaviour
             if (life > 0.01) {
                 life -= 0.1f;                //affichage d'une barre bomportaznt les trois images de vaisseau et qui décroit en fonction des dégâts pris
                 //bruit de dégats
-                Debug.Log(life);
+                //Debug.Log(life);
             }
             if (life == 0.10) {
                 life -= 0.1f;
@@ -283,8 +283,10 @@ public class Player : MonoBehaviour
     Coroutine CoroutineFlash;
 
     void Fire(InputAction.CallbackContext context) {
+        if (Time.timeScale != 0) { 
         CoroutineFlash = StartCoroutine(FlashNow());
         CoroutineFire = StartCoroutine(ShotNow());
+        }
     }
 
     void StopFire(InputAction.CallbackContext context) {
