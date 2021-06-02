@@ -68,7 +68,7 @@ public class Enemy : MonoBehaviour
 
     void Move() {
         transform.LookAt(target.transform.position);
-        transform.position += transform.forward * 25 * Time.deltaTime;
+        transform.GetComponent<Rigidbody>().velocity = transform.forward * moveSpeed;
         // Debug.Log(target.transform.position);
     }
 }

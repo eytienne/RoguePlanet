@@ -309,8 +309,7 @@ public class Player : MonoBehaviour
             GameObject bullet = bulletPool.GetObject();
             bullet.transform.position = transform.position;
             bullet.transform.rotation = Quaternion.identity;
-            bullet.GetComponent<Bullet>().setTime(Time.time);
-            bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
+            bullet.GetComponent<Bullet>().Initialize(transform.forward * 50);
             bullet.SetActive(true);
             audioData.Play();
             yield return new WaitForSeconds(fireRate);
