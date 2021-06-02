@@ -70,7 +70,6 @@ GameObject:
   - component: {fileID: 7288237408292582228}
   - component: {fileID: 4999726323301459408}
   - component: {fileID: -4781470567453922328}
-  - component: {fileID: 6566698340752314740}
   - component: {fileID: 1358706627}
   - component: {fileID: -6988581120267411454}
   - component: {fileID: 6627798323184504111}
@@ -82,7 +81,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1059074356437855624
 Transform:
   m_ObjectHideFlags: 0
@@ -163,19 +162,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &6566698340752314740
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8295639620188533733}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73e5776d9ec1f7e40be691e6b8af2fe7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  body: {fileID: 0}
 --- !u!114 &1358706627
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -319,6 +305,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   planet: {fileID: 0}
   G: 0
+  altitude: 0
 --- !u!114 &-1336467363433674931
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -51,7 +51,7 @@ public class Enemy : MonoBehaviour
     void FixedUpdate() {
         float dist = Vector3.Distance(transform.position, player.transform.position);
         Debug.Log(shooterEnemy);
-        if (dist <= 50)
+        /*if (dist <= 50)
         {
             Move();
             if (dist <= 30 && isShooting == false && shooterEnemy == true)
@@ -65,8 +65,8 @@ public class Enemy : MonoBehaviour
                 Debug.Log("hors de la zone, dist : " + dist);
                 StopCoroutine(CoroutineFire);
             }
-        }
-        else if(Time.time - time > 2)
+        }*/
+        //else if(Time.time - time > 2)
             Roam();
     }
 
@@ -126,8 +126,7 @@ public class Enemy : MonoBehaviour
             GameObject bullet = bulletPool.GetObject();
             bullet.transform.position = transform.position;
             bullet.transform.rotation = Quaternion.identity;
-            bullet.GetComponent<Bullet>().setTime(Time.time);
-            bullet.GetComponent<Rigidbody>().velocity = transform.forward * 50;
+            bullet.GetComponent<Bullet>().Initialize(transform.forward * 50);
             bullet.SetActive(true);
             isShooting = true;
             yield return new WaitForSeconds(fireRate);
