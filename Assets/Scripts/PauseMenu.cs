@@ -2,12 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class PauseMenu : MonoBehaviour
 {
     public Player player;
     public GameObject PauseCanvas;
     public GameObject OptionsCanvas;
+    public GameObject GameOverCanvas;
     bool Paused = false;
 
     public void Pause()
@@ -47,5 +49,10 @@ public class PauseMenu : MonoBehaviour
             OptionsCanvas.SetActive(false);
         }
 
+    }
+    public void Rejouer()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        OptionsCanvas.SetActive(false);
     }
 }

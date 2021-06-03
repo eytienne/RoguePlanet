@@ -29,10 +29,13 @@ public class Player : MonoBehaviour
     PlayerControls inputActions;
 
     const int lastMovesLimit = 3;
-    private float life = 1;
+    private int life = 100;
     public Slider slider;
+    private int bulletnumber = 8;
     // struct to persist the data of the Input System context getters which only return global current values
     public PauseMenu pauseMenu;
+    private float tempstir;
+    public GameObject GameOverCanvas;
 
     struct _CallbackContext
     {
@@ -91,10 +94,12 @@ public class Player : MonoBehaviour
     }
 
     void Start() {
-        slider.value = 1;
+        Time.timeScale = 1f;
+        slider.value = 100;
         audioData = GetComponent<AudioSource>();
         m_rigidbody.drag = 0.5f;
         m_rigidbody.angularDrag = 0.5f;
+        tempstir = Time.time;
     }
 
     // void Start() {
@@ -259,17 +264,16 @@ public class Player : MonoBehaviour
     void OnCollisionEnter(Collision col) {
 
         if (col.gameObject.tag == "Enemy") {
+            Debug.Log("VIE : " + life);
             //GameObject imageObject = GameObject.FindGameObjectWithTag("life" + lives);
             //imageObject.SetActive(false);
-            if (life > 0.01) {
-                life -= 0.1f;                //affichage d'une barre bomportaznt les trois images de vaisseau et qui décroit en fonction des dégâts pris
-                //bruit de dégats
-                //Debug.Log(life);
-            }
-            if (life == 0.10) {
-                life -= 0.1f;
+            life -= 10;
+            //bruit de dégats
+            if (life == 0) { 
+                GameOverCanvas.SetActive(true);
+                Time.timeScale = 0f;
+                gameObject.SetActive(false);
                 //bruit de destruction
-                //gameover
             }
             slider.value = life;
         }
@@ -295,10 +299,13 @@ public class Player : MonoBehaviour
         flash.intensity = 0;
     }
 
-    IEnumerator FlashNow() {
+    IEnumerator FlashNow()
+    {
         float waitTime = fireRate / 2;
+        yield return new WaitForSeconds(fireRate - (Time.time - tempstir));
         // Get half of the seconds (One half to get brighter and one to get darker
-        while (true) {
+        while (true)
+        {
             flash.intensity = 1;
             yield return new WaitForSeconds(waitTime);
             flash.intensity = 0;
@@ -306,16 +313,27 @@ public class Player : MonoBehaviour
         }
     }
 
-    IEnumerator ShotNow() {
-        while (true) {
-            GameObject bullet = bulletPool.GetObject();
-            bullet.transform.position = transform.position;
-            bullet.transform.rotation = Quaternion.identity;
-            bullet.GetComponent<Bullet>().Initialize(transform.forward * 50);
-            bullet.SetActive(true);
-            audioData.Play();
+    IEnumerator ShotNow()
+    {
+        float decalage = 0.5f;
+        float difftime = fireRate - (Time.time - tempstir);
+        float largeur = (bulletnumber - 1) * decalage;
+        yield return new WaitForSeconds(difftime);
+
+        while (true)
+        {
+            for (int i = 0; i < bulletnumber; i++)
+            {
+                Debug.Log(i);
+                GameObject bullet = bulletPool.GetObject();
+                bullet.transform.position = transform.TransformPoint(new Vector3((float)i / bulletnumber * largeur - largeur / 2, 0, 0)); 
+                bullet.transform.rotation = Quaternion.identity;
+                bullet.GetComponent<Bullet>().Initialize(transform.forward * 50);
+                bullet.SetActive(true);
+                tempstir = Time.time;
+                audioData.Play();
+            }
             yield return new WaitForSeconds(fireRate);
         }
     }
-
 }
