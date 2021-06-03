@@ -19,8 +19,8 @@ public class EnemySpawner : MonoBehaviour
 
     void FixedUpdate() {
         if (pool.inUseCount < 1 && nbToSpawn > 0) {
-            int spawnerIndex = Random.Range(0, spawners.Length - 1);
             for (int i = 0; i < nbToSpawn; i++) {
+                int spawnerIndex = Random.Range(0, spawners.Length - 1);
                 WaveManager(spawnerIndex);
             }
             nbWaveT.text = nbWave.ToString();
