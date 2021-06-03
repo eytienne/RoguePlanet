@@ -7,9 +7,7 @@ TagManager:
   - Spawner
   - Planet
   - Attractor
-  - Bullet
   - Enemy
-  - EnemyBullet
   layers:
   - Default
   - TransparentFX

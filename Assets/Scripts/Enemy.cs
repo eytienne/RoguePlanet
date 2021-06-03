@@ -15,14 +15,17 @@ public class Enemy : MonoBehaviour
     public GameObject planet;
     public HitBox hitBox;
     public float moveSpeed = 10f;
+    public float roamSpeed = 3f;
     public Pool bulletPool;
     public float fireRate = 2f;
 
-    private bool shooterEnemy = false;
-    private bool isShooting = false;
-    private double time;
+    bool shooterEnemy = false;
+    bool isShooting = false;
+    float roamTimeInADirection = 4;
+    double lastRoam;
 
-    Rigidbody rb;
+
+    Rigidbody m_rigidbody;
     AudioSource audioData;
     int terrainLayer;
     Vector3 gravity, groundDirection;
@@ -35,34 +38,51 @@ public class Enemy : MonoBehaviour
     });
 
     void Awake() {
-        rb = GetComponent<Rigidbody>();
+        m_rigidbody = GetComponent<Rigidbody>();
         gravity = (planet.transform.position - transform.position).normalized;
         groundDirection = gravity;
         terrainLayer = LayerMask.NameToLayer("Terrain");
         target = GameObject.Find("Player");
         audioData = GetComponent<AudioSource>();
+        lastRoam = -1 - roamTimeInADirection;
     }
 
     void OnEnable() {
         hitBox.hit += Die;
     }
 
+    void OnDisable() {
+        Debug.Log("OnDisable enemy");
+        hitBox.hit -= Die;
+    }
+
     Coroutine CoroutineFire;
+    Vector3 randomeMove;
     void FixedUpdate() {
-        float dist = Vector3.Distance(transform.position, player.transform.position);
-        if (dist <= 50) {
-            Move();
-            if (dist <= 30 && isShooting == false && shooterEnemy == true) {
-                CoroutineFire = Shoot();
+        Vector3 toPlayer = player.transform.position - transform.position;
+        float playerDistance = toPlayer.magnitude;
+        if (playerDistance <= 50) {
+            Move(toPlayer, moveSpeed);
+            if (playerDistance <= 30 && isShooting == false && shooterEnemy == true) {
+                CoroutineFire = StartCoroutine(ShotNow());
                 // Debug.Log("Dans la zone, dist : " + dist);
-            } else if (dist > 30 && isShooting == true) {
+            } else if (playerDistance > 30 && isShooting == true) {
                 isShooting = false;
                 // Debug.Log("hors de la zone, dist : " + dist);
                 StopCoroutine(CoroutineFire);
             }
-        } else if (Time.time - time > 2) {
-            Roam();
+        } else {
+            // roaming si le joueur n'est pas en vue
+            if (Time.fixedTimeAsDouble - lastRoam > roamTimeInADirection) {
+                lastRoam = Time.fixedTimeAsDouble;
+                randomeMove = transform.TransformDirection(new Vector3(UnityEngine.Random.value * 2 - 1, 0, UnityEngine.Random.value * 2 - 1)).normalized;
+            }
+            Move(randomeMove, roamSpeed);
         }
+    }
+
+    public void SetShootingAbility(bool b) {
+        this.shooterEnemy = b;
     }
 
     void Die() {
@@ -70,51 +90,22 @@ public class Enemy : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    void Turn() {
-        Vector3 pos = target.transform.position - transform.position;
-        Quaternion rot = Quaternion.LookRotation(pos);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * rotationalDamp);
-    }
-
-    /* RandomUnitVector()
-    {
-        float random = Random.Range(0f, 260f);
-        return new Vector2(Mathf.Cos(random), Mathf.Sin(random));
-    }*/
-
-    void Roam() {
-        //déplacement de l'ennemie si le joueur n'est pas en vue
-        time = Time.time;
-        Vector3 transformDirection = transform.TransformDirection(new Vector3(UnityEngine.Random.value * 2 - 1, 0, UnityEngine.Random.value * 2 - 1)).normalized;
+    void Move(Vector3 moveDirection, float moveSpeed) {
+        // transform.LookAt(target.transform.position);
         Vector3 groundNormal = transform.GetGroundNormal(planet, groundDirection, terrainLayer);
-        Vector3 moveDirection = Vector3.ProjectOnPlane(transformDirection, groundNormal).normalized;
+        m_rigidbody.MoveRotation(
+            Quaternion.FromToRotation(transform.forward, moveDirection).normalized
+            * Quaternion.FromToRotation(transform.up, groundNormal).normalized
+            * m_rigidbody.rotation
+        );
 
-        transform.GetComponent<Rigidbody>().velocity = moveDirection * moveSpeed;
-
-    }
-
-    Coroutine Shoot() {
-        return StartCoroutine(ShotNow());
-
-    }
-
-    void IsInRange() {
-        //se déplace vers le joueur car il est en ligne de vue
-
-    }
-
-    void Move() {
-        transform.LookAt(target.transform.position);
-        transform.GetComponent<Rigidbody>().velocity = transform.forward * moveSpeed;
-    }
-
-    public void SetShootingAbility(bool b) {
-        this.shooterEnemy = b;
+        moveDirection = Vector3.ProjectOnPlane(moveDirection, groundNormal).normalized;
+        Debug.DrawRay(transform.position, moveDirection.normalized, Color.magenta);
+        m_rigidbody.velocity = moveDirection * moveSpeed;
     }
 
     IEnumerator ShotNow() {
         while (true) {
-
             GameObject bullet = bulletPool.GetObject();
             bullet.transform.position = transform.position;
             bullet.transform.rotation = Quaternion.identity;

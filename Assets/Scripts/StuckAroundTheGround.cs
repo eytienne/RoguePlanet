@@ -61,6 +61,7 @@ public class StuckAroundTheGround : MonoBehaviour
                 m_rigidbody.velocity = Vector3.zero;
             }
         } else {
+            Debug.DrawRay(transformPosition, gravity.normalized, Color.black);
             m_rigidbody.AddForce(gravity, ForceMode.Acceleration);
         }
     }

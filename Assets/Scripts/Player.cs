@@ -269,7 +269,7 @@ public class Player : MonoBehaviour
             //imageObject.SetActive(false);
             life -= 10;
             //bruit de dégats
-            if (life == 0) { 
+            if (life == 0) {
                 GameOverCanvas.SetActive(true);
                 Time.timeScale = 0f;
                 gameObject.SetActive(false);
@@ -299,13 +299,11 @@ public class Player : MonoBehaviour
         flash.intensity = 0;
     }
 
-    IEnumerator FlashNow()
-    {
+    IEnumerator FlashNow() {
         float waitTime = fireRate / 2;
         yield return new WaitForSeconds(fireRate - (Time.time - tempstir));
         // Get half of the seconds (One half to get brighter and one to get darker
-        while (true)
-        {
+        while (true) {
             flash.intensity = 1;
             yield return new WaitForSeconds(waitTime);
             flash.intensity = 0;
@@ -313,20 +311,16 @@ public class Player : MonoBehaviour
         }
     }
 
-    IEnumerator ShotNow()
-    {
+    IEnumerator ShotNow() {
         float decalage = 0.5f;
         float difftime = fireRate - (Time.time - tempstir);
         float largeur = (bulletnumber - 1) * decalage;
         yield return new WaitForSeconds(difftime);
 
-        while (true)
-        {
-            for (int i = 0; i < bulletnumber; i++)
-            {
-                Debug.Log(i);
+        while (true) {
+            for (int i = 0; i < bulletnumber; i++) {
                 GameObject bullet = bulletPool.GetObject();
-                bullet.transform.position = transform.TransformPoint(new Vector3((float)i / bulletnumber * largeur - largeur / 2, 0, 0)); 
+                bullet.transform.position = transform.TransformPoint(new Vector3((float)i / bulletnumber * largeur - largeur / 2, 0, 0));
                 bullet.transform.rotation = Quaternion.identity;
                 bullet.GetComponent<Bullet>().Initialize(transform.forward * 50);
                 bullet.SetActive(true);

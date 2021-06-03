@@ -29,6 +29,7 @@ public class Bullet : MonoBehaviour
         if (shooter.tag == collider.tag) return;
         HitBox hitBox = collider.GetComponent<HitBox>();
         if (hitBox) {
+            Debug.Log(name + " " + shooter.tag + " " + hitBox.GetComponentInParent<GameObject>().name);
             hitBox.Hit();
             gameObject.SetActive(false);
         }
