@@ -29,9 +29,9 @@ public class Player : MonoBehaviour
     PlayerControls inputActions;
 
     const int lastMovesLimit = 3;
-    private int life = 100;
+    public int life = 100;
     public Slider slider;
-    private int bulletnumber = 8;
+    public int bulletnumber = 1;
     // struct to persist the data of the Input System context getters which only return global current values
     public PauseMenu pauseMenu;
     private float tempstir;
@@ -264,7 +264,7 @@ public class Player : MonoBehaviour
     void OnCollisionEnter(Collision col) {
 
         if (col.gameObject.tag == "Enemy") {
-            Debug.Log("VIE : " + life);
+            //Debug.Log("VIE : " + life);
             //GameObject imageObject = GameObject.FindGameObjectWithTag("life" + lives);
             //imageObject.SetActive(false);
             life -= 10;
