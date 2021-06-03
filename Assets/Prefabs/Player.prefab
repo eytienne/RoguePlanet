@@ -331,7 +331,7 @@ AudioSource:
   m_GameObject: {fileID: 9222335403468367762}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 24300002, guid: 953e199264669e540a302c55613bb92c, type: 2}
   m_audioClip: {fileID: 8300000, guid: 038b3f16b17e5ad4a8a7bfd0e7b2ffe6, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.32
@@ -438,6 +438,7 @@ MonoBehaviour:
   decelerationTime: 0.4
   delayBeforeStop: 0.35
   slider: {fileID: 0}
+  pauseMenu: {fileID: 0}
   planet: {fileID: 0}
   altitude: 2
   hoverForce: 10
@@ -460,3 +461,5 @@ MonoBehaviour:
   model: {fileID: 0}
   amount: 50
   allowGettingUsedWhenNoAvailable: 1
+  _inUse: []
+  available: []
