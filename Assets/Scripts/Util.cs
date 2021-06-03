@@ -84,7 +84,8 @@ namespace Utils
                 groundNormal = Vector3.LerpUnclamped(groundNormal, normal, (float)(k == 0 ? 1 : k) / (k + 1));
             }
 
-            return groundNormal;
+            // TODO check for a better solution and for its deficiencies on moutains
+            return Vector3.Dot(groundNormal, groundDirection) < 0 ? groundNormal : -groundNormal;
         }
     }
 }

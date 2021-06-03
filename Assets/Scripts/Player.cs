@@ -180,6 +180,7 @@ public class Player : MonoBehaviour
 
 
         Plane gravityPlane = new Plane(-gravity, transform.position);
+        Debug.DrawRay(transform.position, groundNormal, Color.cyan);
         Quaternion rotateToGround = Quaternion.FromToRotation(transform.up, groundNormal);
         rotateToGround = _rotateToGround = Quaternion.SlerpUnclamped(_rotateToGround, rotateToGround, 30 * Time.fixedDeltaTime);
         // Debug.Log("groundNormal " + groundNormal + " magnitude " + groundNormal.magnitude + " rotateToGround " + rotateToGround);
