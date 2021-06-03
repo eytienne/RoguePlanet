@@ -50,7 +50,7 @@ public class Enemy : MonoBehaviour
     Coroutine CoroutineFire;
     void FixedUpdate() {
         float dist = Vector3.Distance(transform.position, player.transform.position);
-        if (dist <= 50) {
+        //if (dist <= 50) {
             Move();
             if (dist <= 30 && isShooting == false && shooterEnemy == true) {
                 CoroutineFire = Shoot();
@@ -60,9 +60,9 @@ public class Enemy : MonoBehaviour
                 // Debug.Log("hors de la zone, dist : " + dist);
                 StopCoroutine(CoroutineFire);
             }
-        } else if (Time.time - time > 2) {
+        /*} else if (Time.time - time > 2) {
             Roam();
-        }
+        }*/
     }
 
     void Die() {

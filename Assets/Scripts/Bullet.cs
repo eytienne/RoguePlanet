@@ -26,7 +26,7 @@ public class Bullet : MonoBehaviour
     }
 
     void OnTriggerEnter(Collider collider) {
-        if (shooter.tag == collider.tag) return;
+        if ((shooter.tag == "Enemy" && collider.gameObject.name == "HitBox") || collider.material.name == "NoFriction") return;
         HitBox hitBox = collider.GetComponent<HitBox>();
         if (hitBox) {
             hitBox.Hit();

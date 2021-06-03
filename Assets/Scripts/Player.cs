@@ -264,7 +264,7 @@ public class Player : MonoBehaviour
     void OnCollisionEnter(Collision col) {
 
         if (col.gameObject.tag == "Enemy") {
-            Debug.Log("VIE : " + life);
+            //Debug.Log("VIE : " + life);
             //GameObject imageObject = GameObject.FindGameObjectWithTag("life" + lives);
             //imageObject.SetActive(false);
             life -= 10;
@@ -324,7 +324,7 @@ public class Player : MonoBehaviour
         {
             for (int i = 0; i < bulletnumber; i++)
             {
-                Debug.Log(i);
+                //Debug.Log(i);
                 GameObject bullet = bulletPool.GetObject();
                 bullet.transform.position = transform.TransformPoint(new Vector3((float)i / bulletnumber * largeur - largeur / 2, 0, 0)); 
                 bullet.transform.rotation = Quaternion.identity;
