@@ -304,7 +304,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planet: {fileID: 0}
-  G: 0
+  G: 9.81
   altitude: 0
 --- !u!114 &-1336467363433674931
 MonoBehaviour:
@@ -319,7 +319,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   model: {fileID: 0}
-  amount: 10
+  amount: 20
   allowGettingUsedWhenNoAvailable: 1
   _inUse: []
   available: []

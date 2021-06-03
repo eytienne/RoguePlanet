@@ -38,21 +38,7 @@ public class Planet : MonoBehaviour
         Vector3.forward,
         Vector3.back,
     };
-
-    [RequireComponent(typeof(MeshRenderer), typeof(MeshCollider), typeof(MeshFilter)), ExecuteInEditMode]
-    public class Face : MonoBehaviour
-    {
-        public MeshFilter meshFilter;
-        public MeshRenderer meshRenderer;
-        public MeshCollider meshCollider;
-
-        void Awake() {
-            meshRenderer = GetComponent<MeshRenderer>();
-            meshCollider = GetComponent<MeshCollider>();
-            meshFilter = GetComponent<MeshFilter>();
-        }
-    }
-    Face[] faces;
+    PlanetFace[] faces;
 
     public ShapeSettings shape;
     [HideInInspector]
@@ -71,24 +57,24 @@ public class Planet : MonoBehaviour
     }
 
     public void Start() {
-        faces = GetComponentsInChildren<Face>();
+        faces = GetComponentsInChildren<PlanetFace>();
     }
 
     public void Initialize() {
         colourGenerator.UpdateSettings(coloursSettings);
         elevationMinMax = new MinMax();
 
-        if (faces.Length != 6) faces = new Face[6];
+        if (faces.Length != 6) faces = new PlanetFace[6];
         for (int i = 0; i < 6; i++) {
             if (faces[i] == null) {
                 GameObject go = new GameObject("face");
                 go.transform.parent = transform;
                 go.transform.localScale = Vector3.one;
                 Debug.Log("init face " + i);
-                faces[i] = go.AddComponent<Face>();
+                faces[i] = go.AddComponent<PlanetFace>();
             }
             ;
-            Face face = faces[i];
+            PlanetFace face = faces[i];
             face.gameObject.layer = terrainLayer;
             face.GetComponent<MeshRenderer>().sharedMaterial = coloursSettings.planetMaterial;
         }
@@ -102,7 +88,7 @@ public class Planet : MonoBehaviour
 
     void SetupMesh() {
         for (int i = 0; i < 6; i++) {
-            Face face = faces[i];
+            PlanetFace face = faces[i];
             bool renderIt = toRender.HasFlag((Faces)(1 << i));
             face.meshFilter.sharedMesh = renderIt ? GenerateFaceMesh(directions[i], nbSegments) : null;
             face.meshCollider.sharedMesh = renderIt && !designMode ? GenerateFaceMesh(directions[i], Mathf.CeilToInt(colliderPrecision * nbSegments)) : null;
@@ -129,7 +115,7 @@ public class Planet : MonoBehaviour
                 elevationMinMax.AddValue(1 + elevation);
                 even *= 1 + elevation;
                 vertices[i] = even;
-                
+
                 if (x != nbSegments - 1 && y != nbSegments - 1) {
                     triangles[triIndex] = i;
                     triangles[triIndex + 1] = i + nbSegments + 1;
