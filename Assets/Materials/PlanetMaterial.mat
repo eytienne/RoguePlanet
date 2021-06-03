@@ -117,7 +117,7 @@ Material:
     - _Color: {r: 0.51290494, g: 0.8315265, b: 0.9622642, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
-    - _elevationMinMax: {r: 1, g: 1.2214576, b: 0, a: 0}
+    - _elevationMinMax: {r: 1, g: 1.1523948, b: 0, a: 0}
   m_BuildTextureStacks: []
 --- !u!114 &2432728671595576728
 MonoBehaviour:
