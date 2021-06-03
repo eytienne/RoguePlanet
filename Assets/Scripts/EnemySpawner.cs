@@ -8,7 +8,7 @@ public class EnemySpawner : MonoBehaviour
     public int nbToSpawn = 10;
     public int nbWave = 0;
     public Text nbWaveT;
-
+    
     Pool pool;
     GameObject[] spawners;
 
@@ -24,6 +24,7 @@ public class EnemySpawner : MonoBehaviour
                 WaveManager(spawnerIndex);
             }
             nbWaveT.text = nbWave.ToString();
+            //new Bonus().spawnBonus();
             nbWave += 1;
             nbToSpawn += 5;
         }
