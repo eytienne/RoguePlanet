@@ -180,6 +180,7 @@ MonoBehaviour:
   planet: {fileID: 0}
   hitBox: {fileID: 7849189965050094130}
   moveSpeed: 25
+  roamSpeed: 3
   bulletPool: {fileID: -1336467363433674931}
   fireRate: 2
 --- !u!82 &-6988581120267411454
@@ -304,7 +305,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planet: {fileID: 0}
-  G: 9.81
+  G: 300
   altitude: 0
 --- !u!114 &-1336467363433674931
 MonoBehaviour:
